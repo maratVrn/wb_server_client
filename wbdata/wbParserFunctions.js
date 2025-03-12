@@ -1,5 +1,6 @@
 const axios = require('axios-https-proxy-fix');
 const {saveParserProductListLog, saveErrorLog} = require('../servise/log')
+// const sea = require("node:sea");
 
 
 global.axiosProxy  ={ host: '46.8.111.94', port: 8000, protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
@@ -245,9 +246,6 @@ async function PARSER_GetSupplierSubjects(supplierId) {
 
     return supplierSubjectsList
 }
-
-
-
 
 // Получаем список товарв для выбранного предмета и типа сортировки
 async function PARSER_SupplierProductIDList(supplierId, maxPage=30){
@@ -584,7 +582,103 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
     return productListInfo
 }
 
+async function PARSER_GetProductPositionToClient(id, searchWord) {
+    // console.log(id);
+    // console.log(searchWord);
+
+    let position = 0
+    let isThere = false
+    let needGetData = true
+    let needGetNextProducts = true
+    let isProxyOne = true
+    let proxy = global.axiosProxy
+    let maxPage = 10
+    const need_id = parseInt(id)
+    let pageResult = 0
+    let total = 0
+
+    for (let i = 1; i <= maxPage; i++) {
+        let page = i
+        needGetData = true
+        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+            try {
+
+
+
+                let url = `https://search.wb.ru/exactmatch/ru/common/v9/search?ab_testing=false&appType=1&curr=rub&dest=12358291&lang=ru&page=${page}&query=`+
+                    searchWord+'&resultset=catalog&sort=popular&spp=30'
+                url = encodeURI(url)
+                // console.log(url);
+                await axios.get(url, {proxy: proxy}).then(response => {
+                    const resData = response.data
+                    total = resData?.data?.total;
+
+                    if (resData?.data?.products) {
+
+                        for (let k in resData?.data?.products) {
+                            try {
+                                if (parseInt(resData?.data?.products[k].id) === need_id) {
+                                    position += parseInt(k) + 1
+                                    // console.log('нашли ' + position+' i '+ i+' k '+k);
+                                    isThere = true
+                                    needGetNextProducts = false
+                                }
+
+                            } catch (e) {
+                            }
+                            try {
+                                if (resData?.data?.products.length < 100) needGetNextProducts = false
+                            } catch (e) {
+                                needGetNextProducts = false
+                            }
+                            if (isThere) {
+                                needGetNextProducts = false
+                                break
+                            }
+                        }
+                    }
+                })
+                needGetData = false
+
+            } catch (err) {
+                needGetData = false
+
+                if (err.code === 'ECONNRESET') {
+                    saveErrorLog('PARSER_GetCurrProductList', 'Словили ECONNRESET')
+                    await delay(50);
+                    needGetData = true
+                }
+
+                if ((err.status === 429) || (err.response?.status === 429)) {
+                    console.log('Частое подключение к серверу');
+                    if (isProxyOne)  proxy = global.axiosProxy2
+                    else proxy = global.axiosProxy
+                    isProxyOne = !isProxyOne
+
+                    await delay(50);
+                    needGetData = true
+                }
+            }
+        }
+        pageResult = i
+        if (!needGetNextProducts) break
+        // break //TODO: отладка
+        position += 100
+    }
+
+
+
+
+
+    return {searchWord : searchWord, position: position, pageResult:pageResult, total:total}
+}
+
+
+
+
+
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_GetProductListInfo_LITE_ToClient,
-    PARSER_GetProductListInfoToClient,PARSER_GetIAbout,PARSER_GetIdInfo,PARSER_SupplierProductIDList
+    PARSER_GetProductListInfoToClient,PARSER_GetIAbout,PARSER_GetIdInfo,PARSER_SupplierProductIDList,
+    PARSER_GetProductPositionToClient
 }

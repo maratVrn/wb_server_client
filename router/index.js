@@ -28,6 +28,8 @@ router.get('/getProductPhoto/:link', clientController.getProductPhoto)  // По�
 router.get('/getProductAbout/:link', clientController.getProductAbout)
 router.get('/getProductColorsInfo/:link', clientController.getProductColorsInfo)  // Получаем список ссылок на фото
 router.get('/getSupplierInfo/:link', clientController.getSupplierInfo)  // Получаем список ссылок на фото
+// router.get('/getPositionsInfo/:link', clientController.getPositionsInfo)  // Получаем список ссылок на фото
+router.post('/getPositionsInfo', clientController.getPositionsInfo)  // Получаем список ссылок на фото
 
 // Роутеры для работы со статистикой запросов
 router.get('/searchTest', clientController.searchTest)  // Получаем список товаров в заданном каталоге

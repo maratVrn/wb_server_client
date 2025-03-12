@@ -1,7 +1,8 @@
 
 const {WBCatalog, WBAllSubjects} = require('../models/models')
 const axios = require('axios');
-const { PARSER_GetBrandAndCategoriesList, PARSER_GetIAbout, PARSER_GetIdInfo, PARSER_GetProductListInfo_LITE_ToClient} = require("../wbdata/wbParserFunctions")
+const { PARSER_GetBrandAndCategoriesList, PARSER_GetIAbout, PARSER_GetIdInfo,
+    PARSER_GetProductPositionToClient, PARSER_GetProductListInfo_LITE_ToClient} = require("../wbdata/wbParserFunctions")
 const ProductIdService = require('../servise/productId-service')
 const ProductListService = require('../servise/productList-service')
 
@@ -195,7 +196,17 @@ class WBService {
         return photoUrl
     }
 
+    async loadPositionsInfo(id, searchArray){
+        let positionsInfo = []
 
+        for (let i in searchArray){
+            const onePositionInfo = await PARSER_GetProductPositionToClient(id, searchArray[i])
+            // break //TODO: отдладка
+            positionsInfo.push(onePositionInfo)
+        }
+
+        return positionsInfo
+    }
 
     // Тестовая функция
     async test (){

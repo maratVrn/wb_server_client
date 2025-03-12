@@ -43,7 +43,23 @@ class ClientController {
         }
 
     }
+    async getPositionsInfo(req, res, next) {
 
+        try {
+            const id = req.body.id
+            let result = []
+            if (id) {
+                const searchArray  = req.body.searchArray
+                result =   await WBService.loadPositionsInfo(id, searchArray)
+
+            }
+            res.json(result)
+
+        } catch (e) {
+            next(e)
+        }
+
+    }
 
     async getSupplierInfo(req, res, next) {
 

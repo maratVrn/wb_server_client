@@ -78,7 +78,9 @@ class WBService {
         else if (shortId <= 2837)  basket = '17'
         else if (shortId <= 3053)  basket = '18'
         else if (shortId <= 3269)  basket = '19'
-        else  basket = '20'
+        else if (shortId <= 3485)  basket = '20'
+        else if (shortId <= 3701)  basket = '21'
+        else  basket = '22'
 /// Вроде как 216 шаг стабильный полс время
         return basket
     }
@@ -168,7 +170,7 @@ class WBService {
         return productAbout
     }
 
-    async loadLittlePhotoUrl(id){
+    async  loadLittlePhotoUrl(id){
         const shortId = Math.floor(id / 100000)
         const part = Math.floor(id / 1000)
         const basket = this.getBasketFromID(shortId)

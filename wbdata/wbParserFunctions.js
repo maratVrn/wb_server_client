@@ -1,11 +1,6 @@
 const axios = require('axios-https-proxy-fix');
 const {saveParserProductListLog, saveErrorLog} = require('../servise/log')
-// const sea = require("node:sea");
-
-
-global.axiosProxy  ={ host: '46.8.111.94', port: 8000, protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
-global.axiosProxy2  ={ host: '45.88.149.19', port: 8000, protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
-
+const ProxyAndErrors = require('./proxy_and_errors')//require('../wbdata/proxy_and_errors');
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -19,14 +14,14 @@ async function PARSER_GetBrandAndCategoriesList(currCatalog) {
         try {
             // Загрузим бренды
             // const url = `https://catalog.wb.ru/catalog/${currCatalog.catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${currCatalog.catalogParam.query}&curr=rub&dest=-3390370&filters=ffbrand&spp=30`
-            // await axios.get(url, {proxy: global.axiosProxy}).then(response => {
+            // await axios.get(url, ProxyAndErrors.config).then(response => {
             //     const resData = response.data
             //     if (resData?.data?.filters[0]) {
             //         currCatalog.brandList = resData?.data?.filters[0].items
             //     }})
             // Загрузим бренды
             const url2 = `https://catalog.wb.ru/catalog/${currCatalog.catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${currCatalog.catalogParam.query}&curr=rub&dest=-3390370&filters=xsubject&spp=30`
-            await axios.get(url2, {proxy: global.axiosProxy}).then(response => {
+            await axios.get(url2, ProxyAndErrors.config).then(response => {
                 const resData = response.data
                 if (resData?.data?.filters[0]) {
                     currCatalog.subjectList = resData?.data?.filters[0].items
@@ -34,63 +29,11 @@ async function PARSER_GetBrandAndCategoriesList(currCatalog) {
                 }})
             needGetData = false
             isResult = true
-        } catch (err) {
-            needGetData = false
-            console.log(err);
-            if (err.code === 'ECONNRESET') {
-                saveErrorLog('PARSER_GetBrandAndCategoriesList', 'Словили ECONNRESET')
-                await delay(50);
-                needGetData = true
-            }
-
-            if ((err.status === 429) || (err.response?.status === 429)) {
-                saveErrorLog('PARSER_GetBrandAndCategoriesList', 'Частое подключение к серверу')
-                await delay(50);
-                needGetData = true
-            }
-        }
+        } catch (err) {   needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetBrandAndCategoriesList', 'currCatalog '+currCatalog.toString())}
     }
     return isResult
 }
 
-async function PARSER_GetIDInfo(id,subject,kind, brand) {
-    let catalogId = -1
-    let needGetData = true
-
-    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-        try {
-            // const url2 ='https://www.wildberries.ru/webapi/product/145561667/data?subject=80&kind=7&brand=310866989'
-            const url2 =`https://www.wildberries.ru/webapi/product/${id}/data?subject=${subject}&kind=${kind}&brand=${brand}`
-
-            const res =  await axios.post(url2, {proxy: global.axiosProxy}).then(response => {
-                const resData = response.data
-
-                try {catalogId = resData.value.data.sitePath.at(-2).id} catch (err) {
-                    // console.log(err);
-                }
-
-            })
-
-            needGetData = false
-            isResult = true
-        } catch (err) {
-            needGetData = false
-            // console.log(err);
-            // if (err.code === 'ECONNRESET') {
-            //     saveErrorLog('PARSER_GetBrandAndCategoriesList', 'Словили ECONNRESET')
-            //     await delay(50);
-            //     needGetData = true
-            // }
-            //
-            // if ((err.status === 429) || (err.response?.status === 429)) {
-            //     saveErrorLog('PARSER_GetBrandAndCategoriesList', 'Частое подключение к серверу')
-            //     await delay(50);
-            //     needGetData = true
-            // }
-        }
-    }
-    return catalogId
-}
 
 async function PARSER_GetIAbout(url) {
 
@@ -99,7 +42,7 @@ async function PARSER_GetIAbout(url) {
     while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
         try {
 
-            const res =  await axios.get(url, {proxy: global.axiosProxy}).then(response => {
+            const res =  await axios.get(url, ProxyAndErrors.config).then(response => {
                 let resData = response.data
 
                 try {
@@ -117,35 +60,21 @@ async function PARSER_GetIAbout(url) {
 
             needGetData = false
 
-        } catch (err) {
-            needGetData = false
-            console.log(err);
-            if (err.code === 'ECONNRESET') {
-                saveErrorLog('PARSER_GetBrandAndCategoriesList', 'Словили ECONNRESET')
-                await delay(50);
-                needGetData = true
-            }
-
-            if ((err.status === 429) || (err.response?.status === 429)) {
-                saveErrorLog('PARSER_GetBrandAndCategoriesList', 'Частое подключение к серверу')
-                await delay(50);
-                needGetData = true
-            }
-        }
+        }  catch (err) {   needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetIAbout', 'url '+url.toString())}
     }
     return aboutData
 }
 
 async function PARSER_GetIdInfo(id) {
-
+    // console.log('PARSER_GetIdInfo');
     let needGetData = true
-    let infoData = {}
+    let infoData = null
     while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
         try {
             const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+parseInt(id).toString()
-            const res =  await axios.get(url, {proxy: global.axiosProxy}).then(response => {
+            const res =  await axios.get(url,  ProxyAndErrors.config).then(response => {
 
-
+                if (response.data.data.products[0])
                 try {
                     let resData = response.data.data.products[0]
 
@@ -188,38 +117,23 @@ async function PARSER_GetIdInfo(id) {
             needGetData = false
 
         } catch (err) {
-            needGetData = false
-            console.log(err);
-            if (err.code === 'ECONNRESET') {
-                saveErrorLog('PARSER_GetBrandAndCategoriesList', 'Словили ECONNRESET')
-                await delay(50);
-                needGetData = true
-            }
+            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetIdInfo', 'id '+id.toString())
 
-            if ((err.status === 429) || (err.response?.status === 429)) {
-                saveErrorLog('PARSER_GetBrandAndCategoriesList', 'Частое подключение к серверу')
-                await delay(50);
-                needGetData = true
-            }
         }
     }
+    // console.log('infoData.brand '+ infoData.brand);
     return infoData
 }
 
 async function PARSER_GetSupplierSubjects(supplierId) {
     let supplierSubjectsList = []
     let needGetData = true
-    let proxy = global.axiosProxy
-
-
-
-
         needGetData = true
         while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
             try {
 
                 const url2 =`https://catalog.wb.ru/sellers/v8/filters?ab_testing=false&appType=1&curr=rub&dest=12358291&filters=xsubject&spp=30&supplier=${supplierId}`
-                await axios.get(url2, {proxy: proxy}).then(response => {
+                await axios.get(url2, ProxyAndErrors.config).then(response => {
                     const resData = response.data
 
                     try {if (resData.data.filters[0]) supplierSubjectsList = resData.data.filters[0].items} catch (e) {}
@@ -227,24 +141,58 @@ async function PARSER_GetSupplierSubjects(supplierId) {
                 })
                 needGetData = false
 
-            } catch (err) {
-                needGetData = false
-
-                if (err.code === 'ECONNRESET') {
-                    saveErrorLog('PARSER_GetCurrProductList', 'Словили ECONNRESET')
-                    await delay(50);
-                    needGetData = true
-                }
-
-                if ((err.status === 429) || (err.response?.status === 429)) {
-                    console.log('Частое подключение к серверу');
-                    await delay(50);
-                    needGetData = true
-                }
-            }
+            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetSupplierSubjects', 'supplierId '+supplierId.toString())}
         }
 
     return supplierSubjectsList
+}
+
+async function PARSER_LoadCompetitorSeeAlsoInfo(id, seeAlso = true, seePhoto = false, SeeFind = false, findWord = '' ) {
+    let idList = []
+    let onlyIdList = []
+    let needGetData = true
+        needGetData = true
+        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+            try {
+
+                let url = ''
+                if (seeAlso) url = `https://recom.wb.ru/recom/ru/common/v5/search?ab_own_sim=new30&appType=1&curr=rub&dest=12358291&lang=ru&page=1&query=%D0%BF%D0%BE%D1%85%D0%BE%D0%B6%D0%B8%D0%B5%20${id}&resultset=catalog&spp=30`
+                    else
+                        if (seePhoto) url = `https://recom.wb.ru/visual/ru/common/v5/search?appType=1&curr=rub&dest=12358291&lang=ru&page=1&query=${id}&resultset=catalog&spp=30&suppressSpellcheck=false`
+                            else if (SeeFind) {
+                            url = `https://search.wb.ru/exactmatch/ru/common/v9/search?ab_testing=false&appType=1&curr=rub&dest=12358291&lang=ru&page=1&query=`+
+                                findWord+'&resultset=catalog&sort=popular&spp=30'
+                            url = encodeURI(url)
+                        }
+                await axios.get(url, ProxyAndErrors.config).then(response => {
+                    const resData = response.data
+
+                    if (resData?.data?.products) {
+
+                        for (let k in resData?.data?.products)
+                            try {
+
+                                idList.push({
+                                    id              : resData?.data?.products[k].id,
+                                    pos             : parseInt(k)+1,
+                                    brand           : resData?.data?.products[k].brand,
+                                    name	        : resData?.data?.products[k].name	,
+                                    supplier	    : resData?.data?.products[k].supplier,
+                                    supplierId	    : resData?.data?.products[k].supplierId,
+
+                                })
+                                onlyIdList.push(resData?.data?.products[k].id)
+
+                            } catch (e) {}
+
+
+                    }
+                })
+                needGetData = false
+
+            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_LoadCompetitorSeeAlsoInfo', 'id '+id.toString())}
+        }
+    return [idList, onlyIdList]
 }
 
 // Получаем список товарв для выбранного предмета и типа сортировки
@@ -253,12 +201,7 @@ async function PARSER_SupplierProductIDList(supplierId, maxPage=30){
     let onlyIdList = []
     let needGetData = true
     let needGetNextProducts = true
-    let isProxyOne = true
-    let proxy = global.axiosProxy
-
     const supplierSubjectsList = await PARSER_GetSupplierSubjects(supplierId)
-
-
     for (let i = 1; i <= maxPage; i++) {
         let page = i
         needGetData = true
@@ -267,7 +210,7 @@ async function PARSER_SupplierProductIDList(supplierId, maxPage=30){
 
 
                 const url2 =`https://catalog.wb.ru/sellers/v2/catalog?ab_testing=false&appType=1&curr=rub&dest=12358291&lang=ru&page=${page}&sort=popular&spp=30&supplier=${supplierId}`
-                await axios.get(url2, {proxy: proxy}).then(response => {
+                await axios.get(url2,  ProxyAndErrors.config).then(response => {
                     const resData = response.data
                     if (resData?.data?.products) {
 
@@ -297,25 +240,7 @@ async function PARSER_SupplierProductIDList(supplierId, maxPage=30){
                 })
                 needGetData = false
 
-            } catch (err) {
-                needGetData = false
-
-                if (err.code === 'ECONNRESET') {
-                    saveErrorLog('PARSER_GetCurrProductList', 'Словили ECONNRESET')
-                    await delay(50);
-                    needGetData = true
-                }
-
-                if ((err.status === 429) || (err.response?.status === 429)) {
-                    console.log('Частое подключение к серверу');
-                    if (isProxyOne)  proxy = global.axiosProxy2
-                    else proxy = global.axiosProxy
-                    isProxyOne = !isProxyOne
-
-                    await delay(50);
-                    needGetData = true
-                }
-            }
+            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_SupplierProductIDList', 'supplierId '+supplierId.toString())}
         }
         if (!needGetNextProducts) break
     }
@@ -334,7 +259,7 @@ async function PARSER_GetBrandsAndSubjectsList(catalogParam, needBrands = true) 
                 saveParserProductListLog(catalogParam.name, 'Получаем бренды в каталоге')
                 const url = `https://catalog.wb.ru/catalog/${catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${catalogParam.query}&curr=rub&dest=-3390370&filters=ffbrand&spp=30`
                 saveParserProductListLog(catalogParam.name, `Начинаем загрузку брендов по ссылке: ` + url)
-                await axios.get(url, {proxy: global.axiosProxy}).then(response => {
+                await axios.get(url, ProxyAndErrors.config).then(response => {
                     const resData = response.data
                     if (resData?.data?.filters[0]) {
                         brandList = resData?.data?.filters[0].items
@@ -356,37 +281,15 @@ async function PARSER_GetBrandsAndSubjectsList(catalogParam, needBrands = true) 
                 }
                 needGetData = false
             })
-        } catch (error) {
-            console.log(error);
-            needGetData = false
-            console.log('error ' + error.response?.status);
-            saveErrorLog('wbParserFunctions', `Ошибка в PARSER_GetBrandsAndSubjectsList в разделе `+catalogParam.name+'  id '+catalogParam.id)
-            saveErrorLog('wbParserFunctions', error)
-            // TODO: Сделать механизм отработки 429 ошибки универсальным для всех парсер функций c переключением прокси и т.п.
-            let code429 = false
-            if (error.status) if (error.status === 429) code429 = true
-            if (error.response?.status) if (error.response?.status === 429) code429 = true
-            if (code429) {
-                saveParserProductListLog(catalogParam.name, 'Частое подключение к серверу')
-                await delay(50);
-                needGetData = true
-            }  // console.log(err.message);
-
-
-        }
+        } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetBrandsAndSubjectsList', 'catalogParam '+catalogParam.toString())}
     }
     return [brandList, subjectList]
 }
 
 // Берем актуальную информацию по товарам для отображения на клиенте (упрощенный вариант)
 async function PARSER_GetProductListInfo_LITE_ToClient(productIdList) {
-
-
     let productListInfo = []
     let needGetData = true
-
-
-
     let productListStr = ''
     for (let i in productIdList) {
         if (i>0) productListStr += ';'
@@ -396,11 +299,11 @@ async function PARSER_GetProductListInfo_LITE_ToClient(productIdList) {
         try {
             const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
 
-            await axios.get(url, {proxy: global.axiosProxy}).then(response => {
+            await axios.get(url, ProxyAndErrors.config).then(response => {
                 const resData = response.data
 
                 if (resData.data) {
-                    console.log('-------------------->   '+resData.data.products.length);
+                    // console.log('-----------ыы--------->   '+resData.data.products.length);
                     for (let i in resData.data.products){
                         const currProduct = resData.data.products[i]
                         const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
@@ -448,24 +351,7 @@ async function PARSER_GetProductListInfo_LITE_ToClient(productIdList) {
 
             })
             needGetData = false
-        } catch (err) {
-            needGetData = false
-            // TODO: Удалить
-            console.log(' ---------  error  -------');
-            console.log(err);
-            //TODO: ENETUNREACH Обработать когда нет интернета!!
-
-            if (err.code === 'ECONNRESET') {
-                await delay(50);
-                needGetData = true
-            }
-
-            if ((err.status === 429) || (err.response?.status === 429)) {
-                await delay(50);
-                needGetData = true
-            }
-
-        }
+        } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfo_LITE_ToClient', '')}
     }
 
 
@@ -477,13 +363,8 @@ async function PARSER_GetProductListInfo_LITE_ToClient(productIdList) {
 
 // Берем актуальную информацию по товарам для отображения на клиенте
 async function PARSER_GetProductListInfoToClient(productIdList) {
-
-
     let productListInfo = []
     let needGetData = true
-
-
-
     let productListStr = ''
     for (let i in productIdList) {
         if (i>0) productListStr += ';'
@@ -493,7 +374,7 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
         try {
             const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
 
-            await axios.get(url, {proxy: global.axiosProxy}).then(response => {
+            await axios.get(url, ProxyAndErrors.config).then(response => {
                 const resData = response.data
 
                 if (resData.data) {
@@ -555,24 +436,7 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
 
              })
             needGetData = false
-        } catch (err) {
-            needGetData = false
-            // TODO: Удалить
-            console.log(' ---------  error  -------');
-            console.log(err);
-            //TODO: ENETUNREACH Обработать когда нет интернета!!
-
-            if (err.code === 'ECONNRESET') {
-                await delay(50);
-                needGetData = true
-            }
-
-            if ((err.status === 429) || (err.response?.status === 429)) {
-                await delay(50);
-                needGetData = true
-            }
-
-        }
+        } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfoToClient', '')}
     }
 
 
@@ -590,8 +454,6 @@ async function PARSER_GetProductPositionToClient(id, searchWord) {
     let isThere = false
     let needGetData = true
     let needGetNextProducts = true
-    let isProxyOne = true
-    let proxy = global.axiosProxy
     let maxPage = 10
     const need_id = parseInt(id)
     let pageResult = 0
@@ -609,7 +471,7 @@ async function PARSER_GetProductPositionToClient(id, searchWord) {
                     searchWord+'&resultset=catalog&sort=popular&spp=30'
                 url = encodeURI(url)
                 // console.log(url);
-                await axios.get(url, {proxy: proxy}).then(response => {
+                await axios.get(url, ProxyAndErrors.config).then(response => {
                     const resData = response.data
                     total = resData?.data?.total;
 
@@ -640,25 +502,7 @@ async function PARSER_GetProductPositionToClient(id, searchWord) {
                 })
                 needGetData = false
 
-            } catch (err) {
-                needGetData = false
-
-                if (err.code === 'ECONNRESET') {
-                    saveErrorLog('PARSER_GetCurrProductList', 'Словили ECONNRESET')
-                    await delay(50);
-                    needGetData = true
-                }
-
-                if ((err.status === 429) || (err.response?.status === 429)) {
-                    console.log('Частое подключение к серверу');
-                    if (isProxyOne)  proxy = global.axiosProxy2
-                    else proxy = global.axiosProxy
-                    isProxyOne = !isProxyOne
-
-                    await delay(50);
-                    needGetData = true
-                }
-            }
+            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductPositionToClient', 'id '+id.toString())}
         }
         pageResult = i
         if (!needGetNextProducts) break
@@ -680,5 +524,5 @@ async function PARSER_GetProductPositionToClient(id, searchWord) {
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_GetProductListInfo_LITE_ToClient,
     PARSER_GetProductListInfoToClient,PARSER_GetIAbout,PARSER_GetIdInfo,PARSER_SupplierProductIDList,
-    PARSER_GetProductPositionToClient
+    PARSER_GetProductPositionToClient,PARSER_LoadCompetitorSeeAlsoInfo
 }

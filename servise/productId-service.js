@@ -3,6 +3,10 @@ const {DataTypes} = require("sequelize");
 const { Op } = require("sequelize");
 const {saveErrorLog, saveParserFuncLog} = require("./log");
 
+const ProductListService = require('../servise/productList-service')
+
+const WBService = require('../servise/wb-service')
+
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 
@@ -42,30 +46,47 @@ class ProductIdService {
         return result
     }
 
-    async getIdInfoByList (idList){
-        let result = []
-
-        if (idList.length>0) {
+    // Собираем информацию по ид и помещаем в мэп массив для простого доступа к инф-мм
+    async getControlIdListByList (onlyIdList){
+        const controlIdList = new Map()
+        let idInfoList = []
+        if (onlyIdList.length>0) {
             this.WBProductIdTable.tableName ='wb_productIdListAll'
             await this.WBProductIdTable.sync({ alter: true })
-            result = await this.WBProductIdTable.findAll({where:
+            idInfoList = await this.WBProductIdTable.findAll({where:
                     {id:{
-                            [Op.in]: idList
+                            [Op.in]: onlyIdList
                         }}
 
             })
+        }
+        if (idInfoList.length>0){
+
+
+            for (let i in onlyIdList) {
+                let isNoInBase = true
+                for (let k in idInfoList)
+                    if (idInfoList[k].id === onlyIdList[i]){
+
+                        if (controlIdList.has(idInfoList[k].catalogId)) {
+                            controlIdList.set(idInfoList[k].catalogId, [...controlIdList.get(idInfoList[k].catalogId), onlyIdList[i]])
+                        } else controlIdList.set(idInfoList[k].catalogId, [onlyIdList[i]])
+                        isNoInBase = false
+                        break
+                    }
+                // Если товара нет в базе то моещаем его с key = 0 те отсортируем все их по отдельному ключу
+                if (isNoInBase) {
+                    if (controlIdList.has(0)) {
+                        controlIdList.set(0, [...controlIdList.get(0), onlyIdList[i]])
+                    } else controlIdList.set(0, [onlyIdList[i]])
+                }
+
+            }
 
         }
-        return result
+        return controlIdList
     }
-    // //
-    // //
-    // // User.findAll({
-    // //                  where: {
-    //                      userId: {
-    //                          [Op.in]: userIds
-    //                      }
-    // //                  }
+
 
 
 }

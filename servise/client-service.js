@@ -1,9 +1,9 @@
-const axios = require('axios');
-const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList} = require("../wbdata/wbParserFunctions")
+
+const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList, PARSER_GetIdInfo,PARSER_LoadCompetitorSeeAlsoInfo} = require("../wbdata/wbParserFunctions")
 const ProductListService = require('../servise/productList-service')
 const ProductIdService = require('../servise/productId-service')
 const WBService = require('../servise/wb-service')
-const { performance } = require('perf_hooks');
+
 
 class ClientService {
 
@@ -31,48 +31,54 @@ class ClientService {
         return productAbout
     }
 
-    async getSupplierInfo(supplierId){
-
-
+    async loadCompetitorSeeAlsoInfo(id){
         let result = []
-        // TODO: тут надо собирать по категориям! тк если товаров больше 10_000 не все соберется
+        const [idList, onlyIdList] = await PARSER_LoadCompetitorSeeAlsoInfo(id, true)
+        const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
+        result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
+        return result
+    }
+    async loadCompetitorSeeFindInfo(id, findText){
+        let result = []
+        const [idList, onlyIdList] = await PARSER_LoadCompetitorSeeAlsoInfo(id, false, false, true, findText)
+        const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
+        result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
+        return result
+    }
+
+    async loadCompetitorSeePhotoInfo(id){
+        let result = []
+        const [idList, onlyIdList] = await PARSER_LoadCompetitorSeeAlsoInfo(id, false, true)
+        const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
+        result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
+        return result
+    }
+
+
+    async getSupplierInfo(supplierId){
+        let result = []
         const [idList, onlyIdList] = await PARSER_SupplierProductIDList(supplierId,100)
-               //Новый вариант сбора
-        const idInfoList = await ProductIdService.getIdInfoByList(onlyIdList)
+        const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
+        result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
+        return result
+    }
 
-        // Соберем Ассоциативный массив по catalogID чтобы потом сделать групповую загрузку
-        const controlIdList = new Map()
-        for (let i in onlyIdList) {
-            let isNoInBase = true
-            for (let k in idInfoList)
-                if (idInfoList[k].id === onlyIdList[i]){
+    // Подгрузим информацию по ид-кам и вернем полную картину из нашей БД
+    async  getResultProductInfoList_ByControlIdListByList (controlIdList,idList){
+        let result = []
 
-                    if (controlIdList.has(idInfoList[k].catalogId)) {
-                        controlIdList.set(idInfoList[k].catalogId, [...controlIdList.get(idInfoList[k].catalogId), onlyIdList[i]])
-                    } else controlIdList.set(idInfoList[k].catalogId, [onlyIdList[i]])
-                    isNoInBase = false
-                    break
-                }
-            if (isNoInBase) {
-                if (controlIdList.has(0)) {
-                    controlIdList.set(0, [...controlIdList.get(0), onlyIdList[i]])
-                } else controlIdList.set(0, [onlyIdList[i]])
-            }
-
-        }
-        let one = true
         for (let key of controlIdList.keys()) {
             const currIdArray = controlIdList.get(key)
             if (key === 0){
+                // Если товаров нету в базе
                 for (let i in currIdArray){
                     for (let j in idList)
                         if (currIdArray[i]===idList[j].id){
                             const oneInfo = {
                                 id: idList[j].id,
-                                subjectId: idList[j].subjectId,
-                                subjectName: idList[j].subjectName,
-                                productInfo: null,
-                                photoUrl        : await WBService.loadLittlePhotoUrl(idList[j].id),
+                                idInfo : idList[j],
+                                productInfo : null,
+                                photoUrl  : await WBService.loadLittlePhotoUrl(idList[j].id),
                             }
                             result.push(oneInfo)
                             break
@@ -85,8 +91,7 @@ class ClientService {
                         if (productInfo[i].id===idList[j].id){
                             const oneInfo = {
                                 id: idList[j].id,
-                                subjectId: idList[j].subjectId,
-                                subjectName: idList[j].subjectName,
+                                idInfo : idList[j],
                                 productInfo: productInfo[i],
                                 photoUrl        :await  WBService.loadLittlePhotoUrl(idList[j].id),
                             }
@@ -96,9 +101,20 @@ class ClientService {
                 }
             }
         }
-
-
         return result
+
+    }
+
+    async getProductStartInfo (id){
+        let isInWB = false
+        let isInBase = false
+        const idInfoWB = await PARSER_GetIdInfo(id)
+        if (idInfoWB) {
+            isInWB = true
+            const idInfo = await ProductIdService.getIdInfo(id)
+            if (idInfo) isInBase = true
+        }
+        return {isInWB : isInWB, isInBase : isInBase}
     }
 
     async getProductInfo (id){

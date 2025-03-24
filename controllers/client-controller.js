@@ -30,6 +30,21 @@ class ClientController {
 
     }
 
+
+    async getProductStartInfo(req, res, next) {
+
+        try {
+            const id = req.params.link
+            const result = await ClientService.getProductStartInfo(id)
+
+            res.json(result)
+
+        } catch (e) {
+            next(e)
+        }
+
+    }
+
     async getProductInfo(req, res, next) {
 
         try {
@@ -77,20 +92,50 @@ class ClientController {
 
     }
 
-    async getProductColorsInfo(req, res, next) {
-
+    async getCompetitorSeeAlsoInfo(req, res, next) {
         try {
             const id = req.params.link
             let result = []
+            if (id)  result = await ClientService.loadCompetitorSeeAlsoInfo(id)
+            res.json(result)
+        } catch (e) {  next(e)  }
+    }
+
+
+    async getCompetitorSeeFindInfo(req, res, next) {
+        try {
+            console.log('tut');
+            const id = req.body.id
+            let result = []
             if (id) {
-                result = await WBService.loadProductColorsInfo(id)
+                const findText  = req.body.findText
+                result =   await ClientService.loadCompetitorSeeFindInfo(id, findText)
+
             }
             res.json(result)
 
-        } catch (e) {
-            next(e)
-        }
+        } catch (e) {  next(e)  }
+    }
+    async getCompetitorSeePhotoInfo(req, res, next) {
+        try {
+            const id = req.params.link
+            let result = []
+            if (id)  result = await ClientService.loadCompetitorSeePhotoInfo(id)
+            res.json(result)
+        } catch (e) {  next(e)  }
+    }
 
+
+
+
+
+    async getProductColorsInfo(req, res, next) {
+        try {
+            const id = req.params.link
+            let result = []
+            if (id)  result = await WBService.loadProductColorsInfo(id)
+            res.json(result)
+        } catch (e) {  next(e)  }
     }
 
 

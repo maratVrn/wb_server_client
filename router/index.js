@@ -23,13 +23,20 @@ router.get('/getProductList/:link', clientController.getProductList)  // Пол�
 // Роутеры для получения данных о товаре
 router.get('/getIdInfo/:link', clientController.getIdInfo)  // Получаем список товаров в заданном каталоге
 // Роутеры для получения данных о товаре
-router.get('/getProductInfo/:link', clientController.getProductInfo)  // Получаем список товаров в заданном каталоге
-router.get('/getProductPhoto/:link', clientController.getProductPhoto)  // Получаем список ссылок на фото
+
+router.get('/getProductStartInfo/:link', clientController.getProductStartInfo)  // Получаем список товаров в заданном каталоге
+router.get('/getProductInfo/:link', clientController.getProductInfo)            // Получаем список товаров в заданном каталоге
+router.get('/getProductPhoto/:link', clientController.getProductPhoto)          // Получаем список ссылок на фото
 router.get('/getProductAbout/:link', clientController.getProductAbout)
-router.get('/getProductColorsInfo/:link', clientController.getProductColorsInfo)  // Получаем список ссылок на фото
-router.get('/getSupplierInfo/:link', clientController.getSupplierInfo)  // Получаем список ссылок на фото
-// router.get('/getPositionsInfo/:link', clientController.getPositionsInfo)  // Получаем список ссылок на фото
-router.post('/getPositionsInfo', clientController.getPositionsInfo)  // Получаем список ссылок на фото
+router.get('/getProductColorsInfo/:link', clientController.getProductColorsInfo)
+router.get('/getSupplierInfo/:link', clientController.getSupplierInfo)
+router.post('/getPositionsInfo', clientController.getPositionsInfo)
+router.get('/getCompetitorSeeAlsoInfo/:link', clientController.getCompetitorSeeAlsoInfo)
+router.get('/getCompetitorSeePhotoInfo/:link', clientController.getCompetitorSeePhotoInfo)
+router.post('/getCompetitorSeeFindInfo', clientController.getCompetitorSeeFindInfo)
+
+
+
 
 // Роутеры для работы со статистикой запросов
 router.get('/searchTest', clientController.searchTest)  // Получаем список товаров в заданном каталоге

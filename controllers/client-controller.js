@@ -1,4 +1,5 @@
 const ClientService = require('../servise/client-service')
+const ProductListService = require('../servise/productList-service')
 const WBService = require("../servise/wb-service");
 const WordStatisticService = require("../servise/wordStatistic-service")
 
@@ -116,6 +117,39 @@ class ClientController {
 
         } catch (e) {  next(e)  }
     }
+
+    async duplicateTest(req, res, next) {
+        try {
+
+            const id = req.body.id
+            const cat1 = req.body.cat1
+            const cat2 = req.body.cat2
+            console.log('tut '+id+'  '+cat1+' '+cat2);
+
+            const data1 = await ProductListService.getProductInfo({catalogId:cat1, id: id})
+            const data2 = await ProductListService.getProductInfo({catalogId:cat2, id: id})
+            console.log(data2);
+            const res1 = data1?.id? {
+                catalogId: cat1,
+                subjectId : data1.subjectId,
+                dateStart: data1.priceHistory[0].d,
+                priceHistory : data1.priceHistory
+            }: null
+
+            const res2 = data2?.id?  {
+                catalogId: cat2,
+                subjectId : data2.subjectId,
+                dateStart: data2.priceHistory[0].d,
+                priceHistory : data2.priceHistory
+            } : null
+
+            let result = [res1, res2]
+
+            res.json(result)
+
+        } catch (e) {  next(e)  }
+    }
+
     async getCompetitorSeePhotoInfo(req, res, next) {
         try {
             const id = req.params.link

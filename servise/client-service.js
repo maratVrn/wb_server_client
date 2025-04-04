@@ -10,7 +10,13 @@ class ClientService {
     async getProductList (catalogId){
         let result = []
         const loadProducts = await ProductListService.getProductList(catalogId)
+        //TODO: Важно сейчас мы передаем текущий весь продукт лист а если там более 500 штук то запрос не выполнится
+        // Внутри PARSER_GetProductListInfoToClient надо обновить дискаунты!
         result = await PARSER_GetProductListInfoToClient(loadProducts)
+        // console.log('Итоговое кол-во '+result.length);
+        // for (let i in result) {
+        //     console.log(result[i].id+'  '+result[i].discount);
+        // }
         return result
     }
 
@@ -56,8 +62,10 @@ class ClientService {
 
 
     async getSupplierInfo(supplierId){
+        console.log('supplierId = '+supplierId);
         let result = []
         const [idList, onlyIdList] = await PARSER_SupplierProductIDList(supplierId,100)
+
         const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
         result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
         return result
@@ -108,13 +116,17 @@ class ClientService {
     async getProductStartInfo (id){
         let isInWB = false
         let isInBase = false
-        const idInfoWB = await PARSER_GetIdInfo(id)
-        if (idInfoWB) {
-            isInWB = true
+        let isFbo = false
+        try {
+            const idInfoWB = await PARSER_GetIdInfo(id)
             const idInfo = await ProductIdService.getIdInfo(id)
             if (idInfo) isInBase = true
-        }
-        return {isInWB : isInWB, isInBase : isInBase}
+            if (idInfoWB) {
+                isInWB = true
+                if (idInfoWB.dtype) if (idInfoWB.dtype === 4) isFbo = true
+            }
+        } catch (e) { console.log(e);}
+        return {isInWB : isInWB, isInBase : isInBase, isFbo : isFbo}
     }
 
     async getProductInfo (id){

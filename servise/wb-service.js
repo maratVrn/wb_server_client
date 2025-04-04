@@ -118,6 +118,7 @@ class WBService {
                     saleCount       : productInfo.saleCount,
                     saleMoney       : productInfo.saleMoney,
                     totalQuantity   : productInfo.totalQuantity,
+                    qtyMoney        : productInfo.totalQuantity*productInfo.price,
                     photoUrl        : await this.loadLittlePhotoUrl(sortId[i]),
                     name            : cur_i_pi>=0 ? parserProductInfo[cur_i_pi].name : ' ',
                     color           : cur_i_pi>=0 ? parserProductInfo[cur_i_pi].color : ' ',

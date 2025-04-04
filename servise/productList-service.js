@@ -2,7 +2,7 @@
 const sequelize = require("../db");
 const {DataTypes, Op} = require("sequelize");
 const {saveErrorLog, saveParserFuncLog} = require('../servise/log')
-
+const ProductIdService = require('../servise/productId-service')
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -54,31 +54,44 @@ class ProductListService {
     }
 
 
-    // Тестовая функция
-    async test (){
-        let testResult = ['tut 1']
-
-
-        console.log('isOk');
-        return testResult
-    }
-
-
 
     // ************************* Функции доступа к данным для клиентской части к таблицам таблицами productList *****************************
     // TODO:  Это должно быть реализовани в отдельном сервере
     async getProductList(catalogId){
+        console.log('catalogId = '+catalogId);
         const isTable = await this.checkTableName(catalogId)
         let result = []
         if (isTable) try {
 
             console.log('юху');
-            const data = await this.WBCatalogProductList.findAll({limit: 20, order: [['id']]})
+            // const data = await this.WBCatalogProductList.findAll({limit: 20, order: [['id']]})
+
+            const data = await this.WBCatalogProductList.findAll({limit: 20, order: [
+                ['saleCount', 'DESC']  // Получаем поля с максимальными продажами
+                ]})
+
+            // const data = await this.WBCatalogProductList.findAll({where:{saleCount:null}})
+
+            console.log('Загруженное кол-во '+data.length);
+            for (let i in data) {
+                console.log(data[i].id+'  '+data[i].saleCount);
+            }
+
+            // console.log(data);
+
+            // const data = await this.WBCatalogProductList.findAll({limit: 100,
+            // where:{saleCount: {[Op.gt]: 1000}}})
+            // const data = await this.WBCatalogProductList.findAll({limit: 20,
+            //     where:{discount : {[Op.gt]: 10} }})
+
+            // for (let i in data) {
+            //     console.log(data[i].id+'  '+data[i].discount);
+            // }
             if (data) result = data
         }
 
         catch (error) {
-            saveErrorLog('productListService',`Ошибка в checkId tableId `+catalogId+'  id = '+id)
+            saveErrorLog('productListService',`Ошибка в checkId tableId `+catalogId+'  id = ')
             saveErrorLog('productListService', error)
             console.log(error);
         }
@@ -118,6 +131,60 @@ class ProductListService {
         return result
     }
 
+
+    // удаляем товары которых больше нет на вб по ним saleCount равно null
+    async deleteZeroID() {
+
+        console.log('tut');
+        let allIdToDeleteCount = 0
+
+        const allTablesName = await sequelize.getQueryInterface().showAllTables()
+        if (allTablesName)
+            for (let i = 0; i < allTablesName.length; i ++)
+            {
+                const tableName = allTablesName[i]
+                if (tableName.toString().includes('productList') && !tableName.toString().includes('all'))  {
+
+                    this.WBCatalogProductList.tableName = tableName
+                    console.log(i+ '  ' + tableName);
+
+                    const data = await this.WBCatalogProductList.findAll({where:{saleCount:null}})
+
+
+                    if (data.length > 0) {
+
+
+                        allIdToDeleteCount+=data.length
+                        const IdList = []
+                        // let idListString = ''
+
+                        for (let j in data) {
+                            IdList.push(data[j].id)
+                            // idListString += data[j].id.toString()+' '
+                        }
+                        console.log('    ------------Удаляем   '+data.length);
+
+                        // await data.destroy()
+
+                        // saveErrorLog('deleteId', '    ---------------------------------------------         ')
+                        // saveErrorLog('deleteId', 'Список нерабочих ид в '+tableName+' всего '+ IdList.length)
+                        // saveErrorLog('deleteId', idListString)
+
+
+
+
+                    }
+
+
+                }
+                if (i > 5) break
+            }
+        saveErrorLog('deleteId','     ---------------------------------------------         ')
+        saveErrorLog('deleteId','Всег надо удалить '+ allIdToDeleteCount)
+
+
+
+    }
 }
 
 module.exports = new ProductListService()

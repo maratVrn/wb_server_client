@@ -70,13 +70,22 @@ class ProxyAndErrors {
         let needGetData = false
         console.log(err.code)
 
-        // Временно не доступен сайт
+        // Временно не доступен сайт ВБ
         if (err.code === 'ECONNRESET') {
             saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+err.code);
             await delay(50);
             needGetData = true
         }
 
+        // Сломался интернет
+        if (err.code === 'ETIMEDOUT') {
+            saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+err.code);
+            await delay(5000);
+            needGetData = true
+        }
+
+
+        // Сломался прокис
         if (err.code === 'ERR_SOCKET_CLOSED') {
             // прокси сломался
             saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+err.code);
@@ -95,6 +104,8 @@ class ProxyAndErrors {
             await delay(50);
             needGetData = true
         }
+
+
 
         // Необработанная ошибка
         if (!needGetData){

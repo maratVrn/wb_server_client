@@ -81,9 +81,9 @@ async function PARSER_GetIdInfo(id) {
                     let price = 0
                     let basicPrice = 0
                     let discount = 0
+                    let dtype = -1
                     if (resData.totalQuantity > 0) {
                         // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
-
                         for (let k in resData.sizes) {
                             if (resData.sizes[k]?.price) {
                                 price = resData.sizes[k]?.price?.product ? Math.round(parseInt(resData.sizes[k]?.price?.product) / 100) : -1
@@ -91,6 +91,18 @@ async function PARSER_GetIdInfo(id) {
                                 if (basicPrice>0) discount = Math.round( 100 * (basicPrice - price)/basicPrice )
                                 break
                             }
+                        }
+                        // Определим dtype
+                        // TODO: Потом это убрать!! это надо сделать один раз при загрузке нового товара и забить и брать из описания
+                        for (let k in resData.sizes) {
+                            let isDType = false
+                            if (resData.sizes[k]?.dtype) dtype = resData.sizes[k].dtype
+                            if (resData.sizes[k]?.stocks)
+                                for (let l in resData.sizes[k]?.stocks) {
+                                    if (resData.sizes[k]?.stocks[l]?.dtype) dtype = resData.sizes[k]?.stocks[l]?.dtype
+                                    if (dtype === 1) {isDType = true; break}
+                                }
+                            if (isDType) break
                         }
                     }
 
@@ -106,7 +118,9 @@ async function PARSER_GetIdInfo(id) {
                         reviewRating    : resData.reviewRating,
                         feedbacks       : resData.feedbacks,
                         sizes           : resData.sizes,
+                        dtype           : dtype,
                     }
+
 
                     infoData = data
                 } catch (err) {console.log(err);                  }
@@ -202,6 +216,7 @@ async function PARSER_SupplierProductIDList(supplierId, maxPage=30){
     let needGetData = true
     let needGetNextProducts = true
     const supplierSubjectsList = await PARSER_GetSupplierSubjects(supplierId)
+
     for (let i = 1; i <= maxPage; i++) {
         let page = i
         needGetData = true
@@ -213,7 +228,7 @@ async function PARSER_SupplierProductIDList(supplierId, maxPage=30){
                 await axios.get(url2,  ProxyAndErrors.config).then(response => {
                     const resData = response.data
                     if (resData?.data?.products) {
-
+                        console.log(resData?.data?.products.length);
                         for (let k in resData?.data?.products)
                             try {
                                 let subjectId = 0
@@ -385,7 +400,8 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
                         // Если остатков товара больше 0  то найдем цену
                         let price = -1
                         let basicPrice = -1
-                        let discount = 0
+                        let wb_discount = 0
+                        let saleCount = 0
                         if (totalQuantity > 0) {
                             // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
 
@@ -393,7 +409,7 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
                                 if (currProduct.sizes[k]?.price) {
                                     price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product) / 100) : -1
                                     basicPrice = currProduct.sizes[k]?.price?.basic ? Math.round(parseInt(currProduct.sizes[k]?.price?.basic) / 100) : -1
-                                    if (basicPrice>0) discount = Math.round( 100 * (basicPrice - price)/basicPrice )
+                                    if (basicPrice>0) wb_discount = Math.round( 100 * (basicPrice - price)/basicPrice )
                                     break
                                 }
                             }
@@ -403,12 +419,15 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
 
                         for (let i in productIdList) {
                             if (productIdList[i].id === currProduct?.id) {
+
+                                currProduct.discount = productIdList[i].discount
+                                saleCount       = productIdList[i].saleCount
                                 priceHistory_tmp = productIdList[i].priceHistory
                                 // Если остатки нулевые возмем цену из товара
                                 if (totalQuantity ===0){
                                     price =  productIdList[i].price
                                     basicPrice = price
-                                    discount = 0
+                                    wb_discount = 0
                                 }
 
                                 break
@@ -421,12 +440,14 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
                             price           : price,
                             totalQuantity   : totalQuantity,
                             reviewRating    : currProduct.reviewRating	 ? currProduct.reviewRating : 0,
-                            discount        : discount,
+                            discount        : currProduct.discount,
+                            wb_discount     : wb_discount,
                             feedbacks	    : currProduct.feedbacks ? currProduct.feedbacks : 0,
                             brand		    : currProduct.brand	    ? currProduct.brand	 : "",
                             name		    : currProduct.name	    ? currProduct.name		 : "",
                             photoUrl        : '',
                             priceHistory    : priceHistory_tmp,
+                            saleCount       : saleCount,
 
                         }
                         productListInfo.push(newproduct)

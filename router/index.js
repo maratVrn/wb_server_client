@@ -13,6 +13,8 @@ const {body} = require('express-validator')
 
 
 router.get('/test', wbController.test)         // тестовая функция для отладки
+router.post('/duplicateTest', clientController.duplicateTest)
+
 
 router.get('/getLiteWBCatalog', wbController.getLiteWBCatalog)         //Загрузка Лайт Версии каталога ВБ с Базы данных, последняя доступная версия
 

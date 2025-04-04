@@ -3,9 +3,6 @@ const {DataTypes} = require("sequelize");
 const { Op } = require("sequelize");
 const {saveErrorLog, saveParserFuncLog} = require("./log");
 
-const ProductListService = require('../servise/productList-service')
-
-const WBService = require('../servise/wb-service')
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -45,6 +42,8 @@ class ProductIdService {
         }
         return result
     }
+
+
 
     // Собираем информацию по ид и помещаем в мэп массив для простого доступа к инф-мм
     async getControlIdListByList (onlyIdList){

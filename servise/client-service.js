@@ -143,6 +143,7 @@ class ClientService {
     }
 
     async getIdInfo (id){
+        console.log('tut');
         let result = []
         const idInfo = await ProductIdService.getIdInfo(id)
 

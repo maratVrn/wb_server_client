@@ -38,6 +38,7 @@ class ProductIdService {
             // result = await this.WBProductIdTable.findOne({where:  { id  : { [Op.gte]: id }}})
 
             result = await this.WBProductIdTable.findOne({where: {id:idInt}})
+            if (idInt === 277498497 ) console.log(result);
 
         }
         return result

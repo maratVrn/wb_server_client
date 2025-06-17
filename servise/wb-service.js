@@ -80,7 +80,11 @@ class WBService {
         else if (shortId <= 3269)  basket = '19'
         else if (shortId <= 3485)  basket = '20'
         else if (shortId <= 3701)  basket = '21'
-        else  basket = '22'
+        else if (shortId <= 3917)  basket = '22'
+        else if (shortId <= 4133)  basket = '23'
+        else if (shortId <= 4349)  basket = '24'
+        else if (shortId <= 4565)  basket = '25'
+        else  basket = '26'
 /// Вроде как 216 шаг стабильный полс время
         return basket
     }

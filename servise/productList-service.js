@@ -10,17 +10,16 @@ class ProductListService {
 
     WBCatalogProductList = sequelize.define('test_ok',{
             id              :   {type: DataTypes.INTEGER, primaryKey: true},
-            maxPrice        :   {type: DataTypes.INTEGER},          // максимальная цена товара
+            dtype           :   {type: DataTypes.INTEGER},          // тип склада
             price           :   {type: DataTypes.INTEGER},          // максимальная цена товара
             reviewRating	:   {type: DataTypes.FLOAT},            // Рейтинг товара ПО Обзорам
-            discount        :   {type: DataTypes.FLOAT},            // текущая скида
             subjectId       :   {type: DataTypes.INTEGER},          // ИД Позиции в предмета
             brandId         :   {type: DataTypes.INTEGER},          // ИД Позиции в бренда
             saleCount       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц
             totalQuantity   :   {type: DataTypes.INTEGER},          // Остатки последние
             saleMoney       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц в руб
-            priceHistory:{type: DataTypes.JSON},         // История изменения цены Берем с первой позиции в sizes basic (БЕЗ скидки) и product	(со скидкой) - все в в ите чтобы проще хранить
-            // countHistory:{type: DataTypes.JSON},         // История кол-ва товаров - берем только totalQuantity
+            priceHistory    :   {type: DataTypes.JSON},             // История изменения цены Берем с первой позиции в sizes basic (БЕЗ скидки) и product	(со скидкой) - все в в ите чтобы проще хранить
+
 
         },
         { createdAt: false,   updatedAt: false  }  )

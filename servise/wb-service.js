@@ -99,6 +99,7 @@ class WBService {
         // sortId.push(id)
         if (productData.colors) sortId =   productData.colors.sort((a, b) => a - b);
         const parserProductInfo = await PARSER_GetProductListInfo_LITE_ToClient(sortId)
+        console.log('PARSER_GetProductListInfo_LITE_ToClient');
         // console.log(sortId);
         // console.log(parserProductInfo);
 
@@ -126,6 +127,7 @@ class WBService {
                     photoUrl        : await this.loadLittlePhotoUrl(sortId[i]),
                     name            : cur_i_pi>=0 ? parserProductInfo[cur_i_pi].name : ' ',
                     color           : cur_i_pi>=0 ? parserProductInfo[cur_i_pi].color : ' ',
+                    priceHistory    : productInfo.priceHistory ? productInfo.priceHistory : [],
                 }
                 ProductColorsInfo.push(oneColor)
             }

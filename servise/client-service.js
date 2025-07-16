@@ -1,5 +1,6 @@
 
-const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList, PARSER_GetIdInfo,PARSER_LoadCompetitorSeeAlsoInfo} = require("../wbdata/wbParserFunctions")
+const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList, PARSER_GetIdInfo,
+    PARSER_LoadCompetitorSeeAlsoInfo, PARSER_SupplierInfo} = require("../wbdata/wbParserFunctions")
 const ProductListService = require('../servise/productList-service')
 const ProductIdService = require('../servise/productId-service')
 const WBService = require('../servise/wb-service')
@@ -62,13 +63,15 @@ class ClientService {
 
 
     async getSupplierInfo(supplierId){
-        console.log('supplierId = '+supplierId);
+        // console.log('supplierId = '+supplierId);
         let result = []
+
+        const supplierInfo = await PARSER_SupplierInfo(supplierId)
         const [idList, onlyIdList] = await PARSER_SupplierProductIDList(supplierId,100)
 
         const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
         result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
-        return result
+        return [result,supplierInfo]
     }
 
     // Подгрузим информацию по ид-кам и вернем полную картину из нашей БД

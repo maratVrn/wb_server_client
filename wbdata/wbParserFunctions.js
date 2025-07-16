@@ -209,6 +209,27 @@ async function PARSER_LoadCompetitorSeeAlsoInfo(id, seeAlso = true, seePhoto = f
     return [idList, onlyIdList]
 }
 
+// Получаем информацию по селлеру
+
+async function PARSER_SupplierInfo(supplierId, maxPage=30){
+    let supplierInfo = {}
+    let needGetData = true
+    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+        try {
+            const url2 = `https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/${supplierId}.json`
+            await axios.get(url2, ProxyAndErrors.config).then(response => {
+                supplierInfo = response.data
+            })
+            needGetData = false
+
+        } catch (err) {
+            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_SupplierInfo', 'supplierId ' + supplierId.toString())
+        }
+
+    }
+    return supplierInfo
+}
+
 // Получаем список товарв для выбранного предмета и типа сортировки
 async function PARSER_SupplierProductIDList(supplierId, maxPage=30){
     let idList = []
@@ -545,5 +566,5 @@ async function PARSER_GetProductPositionToClient(id, searchWord) {
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_GetProductListInfo_LITE_ToClient,
     PARSER_GetProductListInfoToClient,PARSER_GetIAbout,PARSER_GetIdInfo,PARSER_SupplierProductIDList,
-    PARSER_GetProductPositionToClient,PARSER_LoadCompetitorSeeAlsoInfo
+    PARSER_GetProductPositionToClient,PARSER_LoadCompetitorSeeAlsoInfo, PARSER_SupplierInfo
 }

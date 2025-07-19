@@ -11,6 +11,7 @@ class ProductListService {
     WBCatalogProductList = sequelize.define('test_ok',{
             id              :   {type: DataTypes.INTEGER, primaryKey: true},
             dtype           :   {type: DataTypes.INTEGER},          // тип склада
+            needUpdate      :   {type: DataTypes.BOOLEAN},      // обновлять ли товар остатки и тп
             price           :   {type: DataTypes.INTEGER},          // максимальная цена товара
             reviewRating	:   {type: DataTypes.FLOAT},            // Рейтинг товара ПО Обзорам
             subjectId       :   {type: DataTypes.INTEGER},          // ИД Позиции в предмета

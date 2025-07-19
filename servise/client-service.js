@@ -1,6 +1,6 @@
 
-const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList, PARSER_GetIdInfo,
-    PARSER_LoadCompetitorSeeAlsoInfo, PARSER_SupplierInfo} = require("../wbdata/wbParserFunctions")
+const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList, PARSER_GetIdInfo,PARSER_LoadCompetitorSeeAlsoInfo,
+    PARSER_SupplierInfo} = require("../wbdata/wbParserFunctions")
 const ProductListService = require('../servise/productList-service')
 const ProductIdService = require('../servise/productId-service')
 const WBService = require('../servise/wb-service')
@@ -63,7 +63,6 @@ class ClientService {
 
 
     async getSupplierInfo(supplierId){
-        // console.log('supplierId = '+supplierId);
         let result = []
 
         const supplierInfo = await PARSER_SupplierInfo(supplierId)

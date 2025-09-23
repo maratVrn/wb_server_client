@@ -12,7 +12,7 @@ const router = new Router()
 const {body} = require('express-validator')
 
 
-router.get('/test', wbController.test)         // тестовая функция для отладки
+router.get('/wbServerTest', wbController.test)         // тестовая функция для отладки
 router.post('/duplicateTest', clientController.duplicateTest)
 
 

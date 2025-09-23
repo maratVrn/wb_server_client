@@ -1,5 +1,6 @@
 const wbService = require('../servise/wb-service')
 const ProductListService = require('../servise/productList-service')
+const {getTestData} = require('./wbserverApi')
 
 class WbController{
 
@@ -19,11 +20,10 @@ class WbController{
 
     async test (req, res, next) {
         try {
+            // const testResult = 'isOk'
 
 
-
-            const testResult  = await ProductListService.deleteZeroID()
-            console.log('testResult = '+testResult);
+            const testResult  = await getTestData()
             res.json(testResult)
         } catch (e) {
             console.log(e);

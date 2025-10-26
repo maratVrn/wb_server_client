@@ -4,6 +4,42 @@ const WBService = require("../servise/wb-service");
 const WordStatisticService = require("../servise/wordStatistic-service")
 
 class ClientController {
+
+
+
+    async updateIdInfo(req, res, next) {
+
+        try {
+
+            let  idList = req.body.idList? req.body.idList : ''
+            const result = await ClientService.getNowPriceInfo(idList)
+            res.json(result)
+
+        } catch (e) {
+            next(e)
+        }
+
+    }
+
+    async getSearchResult(req, res, next) {
+
+        try {
+
+            const searchParam = {
+                searchQuery :   req.body.searchQuery? req.body.searchQuery : '',
+                pageCount   :   req.body.pageCount? req.body.pageCount : 1,
+            }
+
+            console.log(searchParam);
+            const result = await ClientService.getSearchResult(searchParam)
+            res.json(result)
+
+        } catch (e) {
+            next(e)
+        }
+
+    }
+
     async getProductList(req, res, next) {
 
         try {
@@ -187,20 +223,7 @@ class ClientController {
 
     }
 
-    async getProductPhoto(req, res, next) {
-
-        try {
-            const id = req.params.link
-            const result = await ClientService.getProductPhoto(id)
-
-            res.json(result)
-
-        } catch (e) {
-            next(e)
-        }
-
-    }
-    async searchTest(req, res, next) {
+      async searchTest(req, res, next) {
 
         try {
 

@@ -1,6 +1,6 @@
 
 const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList, PARSER_GetIdInfo,PARSER_LoadCompetitorSeeAlsoInfo,
-    PARSER_SupplierInfo} = require("../wbdata/wbParserFunctions")
+    PARSER_SupplierInfo, PARSER_LoadIdListBySearchParam, PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions")
 const ProductListService = require('../servise/productList-service')
 const ProductIdService = require('../servise/productId-service')
 const WBService = require('../servise/wb-service')
@@ -8,28 +8,87 @@ const WBService = require('../servise/wb-service')
 
 class ClientService {
 
+
+
+    async getSearchResult (searchParam){
+        const result = await PARSER_LoadIdListBySearchParam(searchParam)
+        return result
+    }
+
+    async getNowPriceInfo (idList){
+        const result = []
+
+
+        // Сначала обновим текущие цены
+        const step2 = 350
+        for (let j = 0; j < idList.length; j ++) {
+            try {
+
+                let end_j = j + step2 - 1 < idList.length ? j + step2 - 1 : idList.length - 1
+                let productList = []
+
+                for (let k = j; k <= end_j; k++)
+                    productList.push(idList[k].id)
+
+
+                const updateProductListInfo = await PARSER_GetProductListPriceInfo(productList)
+
+                for (let z in updateProductListInfo)
+                    for (let k in idList)
+                        if (updateProductListInfo[z].id === idList[k].id) {
+                            result.push({id:idList[k].id, price : updateProductListInfo[z].price, priceHistory : [], photoUrl : PARSER_LoadMiddlePhotoUrl(idList[k].id)})
+                            break }
+                j += step2 - 1
+            } catch (error) {console.log(error) };
+
+
+        }
+
+        // Загрузим историю цен
+        let onlyIdList = []
+        for (let k in idList)  onlyIdList.push(idList[k].id)
+        const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
+
+        const dt = new Date().toLocaleDateString()
+
+        for (let key of controlIdList.keys()) {
+            const currIdArray = controlIdList.get(key)
+            const productInfo = await ProductListService.getProductInfoList(currIdArray, key)
+
+            for (let i in productInfo) {
+                for (let j in result)
+                    if (productInfo[i].id === result[j].id) {
+                        result[j].priceHistory = productInfo[i].priceHistory
+                        const nowPrice =  {d: dt, sp: result[j].price}
+                        if (result[j].priceHistory.length>0)
+                            if (result[j].priceHistory.at(-1).d === dt) result[j].priceHistory.pop()
+                        result[j].priceHistory.push(nowPrice)
+
+
+                        break
+                    }
+            }
+        }
+
+        return result
+    }
+
+
+
+
+
     async getProductList (catalogId){
         let result = []
         const loadProducts = await ProductListService.getProductList(catalogId)
         //TODO: Важно сейчас мы передаем текущий весь продукт лист а если там более 500 штук то запрос не выполнится
         // Внутри PARSER_GetProductListInfoToClient надо обновить дискаунты!
         result = await PARSER_GetProductListInfoToClient(loadProducts)
-        // console.log('Итоговое кол-во '+result.length);
-        // for (let i in result) {
-        //     console.log(result[i].id+'  '+result[i].discount);
-        // }
+
         return result
     }
 
 
 
-    async getProductPhoto (id){
-        let photoUrl = []
-        if (id) {
-            photoUrl =  await WBService.loadPhotoUrl(id)
-        }
-        return photoUrl
-    }
     async getProductAbout (id){
         let productAbout = []
         if (id) {
@@ -88,7 +147,7 @@ class ClientService {
                                 id: idList[j].id,
                                 idInfo : idList[j],
                                 productInfo : null,
-                                photoUrl  : await WBService.loadLittlePhotoUrl(idList[j].id),
+                                photoUrl  : await PARSER_LoadLittlePhotoUrl(idList[j].id),
                             }
                             result.push(oneInfo)
                             break
@@ -103,7 +162,7 @@ class ClientService {
                                 id: idList[j].id,
                                 idInfo : idList[j],
                                 productInfo: productInfo[i],
-                                photoUrl        :await  WBService.loadLittlePhotoUrl(idList[j].id),
+                                photoUrl        : PARSER_LoadLittlePhotoUrl(idList[j].id),
                             }
                             result.push(oneInfo)
                             break
@@ -118,17 +177,22 @@ class ClientService {
     async getProductStartInfo (id){
         let isInWB = false
         let isInBase = false
-        let isFbo = false
+        let idInfoWB = []
+        let productInfo = []
+
         try {
-            const idInfoWB = await PARSER_GetIdInfo(id)
+            idInfoWB = await PARSER_GetIdInfo(id)
             const idInfo = await ProductIdService.getIdInfo(id)
-            if (idInfo) isInBase = true
+            if (idInfo) {
+                isInBase = true
+                productInfo = await ProductListService.getProductInfo(idInfo)
+            }
             if (idInfoWB) {
                 isInWB = true
-                if (idInfoWB.dtype) if (idInfoWB.dtype === 4) isFbo = true
+
             }
         } catch (e) { console.log(e);}
-        return {isInWB : isInWB, isInBase : isInBase, isFbo : isFbo}
+        return {isInWB : isInWB, isInBase : isInBase, idInfoWB : idInfoWB, productInfo : productInfo}
     }
 
     async getProductInfo (id){

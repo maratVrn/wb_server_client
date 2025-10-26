@@ -48,6 +48,7 @@ class ProductIdService {
 
     // Собираем информацию по ид и помещаем в мэп массив для простого доступа к инф-мм
     async getControlIdListByList (onlyIdList){
+
         const controlIdList = new Map()
         let idInfoList = []
         if (onlyIdList.length>0) {
@@ -59,10 +60,9 @@ class ProductIdService {
                         }}
 
             })
+
         }
         if (idInfoList.length>0){
-
-
             for (let i in onlyIdList) {
                 let isNoInBase = true
                 for (let k in idInfoList)
@@ -84,6 +84,7 @@ class ProductIdService {
             }
 
         }
+
         return controlIdList
     }
 

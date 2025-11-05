@@ -209,20 +209,6 @@ class ClientController {
     }
 
 
-    async getProductAbout(req, res, next) {
-
-        try {
-            const id = req.params.link
-            const result = await ClientService.getProductAbout(id)
-
-            res.json(result)
-
-        } catch (e) {
-            next(e)
-        }
-
-    }
-
       async searchTest(req, res, next) {
 
         try {

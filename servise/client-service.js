@@ -36,7 +36,8 @@ class ClientService {
                 for (let z in updateProductListInfo)
                     for (let k in idList)
                         if (updateProductListInfo[z].id === idList[k].id) {
-                            result.push({id:idList[k].id, price : updateProductListInfo[z].price, priceHistory : [], photoUrl : PARSER_LoadMiddlePhotoUrl(idList[k].id)})
+                            result.push({id:idList[k].id, price : updateProductListInfo[z].price, priceHistory : [],
+                                photoUrl : PARSER_LoadMiddlePhotoUrl(idList[k].id), totalQuantity   : updateProductListInfo[z].totalQuantity})
                             break }
                 j += step2 - 1
             } catch (error) {console.log(error) };
@@ -88,14 +89,6 @@ class ClientService {
     }
 
 
-
-    async getProductAbout (id){
-        let productAbout = []
-        if (id) {
-            productAbout = await WBService.loadProductAbout(id)
-        }
-        return productAbout
-    }
 
     async loadCompetitorSeeAlsoInfo(id){
         let result = []

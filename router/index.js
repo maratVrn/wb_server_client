@@ -32,7 +32,6 @@ router.get('/getIdInfo/:link', clientController.getIdInfo)  // Получаем 
 
 router.get('/getProductStartInfo/:link', clientController.getProductStartInfo)  // Получаем список товаров в заданном каталоге
 router.get('/getProductInfo/:link', clientController.getProductInfo)            // Получаем список товаров в заданном каталоге
-router.get('/getProductAbout/:link', clientController.getProductAbout)
 router.get('/getProductColorsInfo/:link', clientController.getProductColorsInfo)
 router.get('/getSupplierInfo/:link', clientController.getSupplierInfo)
 router.post('/getPositionsInfo', clientController.getPositionsInfo)

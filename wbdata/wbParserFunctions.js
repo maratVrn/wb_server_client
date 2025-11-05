@@ -142,7 +142,7 @@ async function PARSER_GetIdInfo(id) {
                     let price = 0
                     let basicPrice = 0
                     let discount = 0
-                    let dtype = -1
+
 
                     let realTotalQuantity = 0
                     let needCalcPrice = true
@@ -178,7 +178,6 @@ async function PARSER_GetIdInfo(id) {
                         reviewRating    : resData.reviewRating,
                         feedbacks       : resData.feedbacks,
                         sizes           : resData.sizes,
-                        dtype           : dtype,
                         totalQuantity   : realTotalQuantity
                     }
 
@@ -275,6 +274,7 @@ async function PARSER_LoadIdListBySearchParam(searchParam) {
 
     // Получим списки товаров
     needGetData = true
+
     for (let i = 1; i <= maxPage; i++) {
         let page = i
         needGetData = true
@@ -336,7 +336,7 @@ async function PARSER_LoadIdListBySearchParam(searchParam) {
         if (!needGetNextProducts) break
     }
 
-    // Получим актуальные цена на "сейчас"
+    // Получим актуальные цена на "сейчас" и остатки
     const step2 = 350
     for (let j = 0; j < idList.length; j ++) {
         try {
@@ -350,13 +350,15 @@ async function PARSER_LoadIdListBySearchParam(searchParam) {
 
             const updateProductListInfo = await PARSER_GetProductListPriceInfo(productList)
 
-            for (let z in updateProductListInfo)
+            for (let z in updateProductListInfo) {
                 for (let k in idList)
                     if (updateProductListInfo[z].id === idList[k].id) {
+
                         idList[k].price = updateProductListInfo[z].price
+                        idList[k].totalQuantity = updateProductListInfo[z].totalQuantity
                         break
                     }
-
+            }
             j += step2 - 1
 
         } catch (error) {
@@ -393,19 +395,29 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
 
                     for (let i in resData.data.products){
                         const currProduct = resData.data.products[i]
+                        let realTotalQuantity = 0
+                        let needCalcPrice = true
 
                             let price = -1
                             for (let k in currProduct.sizes) {
-                                if (currProduct.sizes[k]?.price) {
-                                    price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product)  / 100): -1
-                                    break
+
+                                if (needCalcPrice) {
+                                    price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product) / 100) : -1
+                                    needCalcPrice = false
                                 }
+                                for (let z in currProduct.sizes[k].stocks)
+                                    try { realTotalQuantity += currProduct.sizes[k].stocks[z].qty }catch (e) {  }
+
+
                             }
                             const newProduct = {
                                 id              : currProduct?.id ? currProduct.id : 0,
                                 price           : price,
+                                totalQuantity   : realTotalQuantity
                             }
-                            productListInfo.push(newProduct)
+
+
+                        productListInfo.push(newProduct)
                        }
               }})
             needGetData = false
@@ -698,7 +710,6 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
                             if (productIdList[i].id === currProduct?.id) {
 
                                 currProduct.discount = productIdList[i].discount
-                                saleCount       = productIdList[i].saleCount
                                 priceHistory_tmp = productIdList[i].priceHistory
                                 // Если остатки нулевые возмем цену из товара
                                 if (totalQuantity ===0){
@@ -724,7 +735,6 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
                             name		    : currProduct.name	    ? currProduct.name		 : "",
                             photoUrl        : '',
                             priceHistory    : priceHistory_tmp,
-                            saleCount       : saleCount,
 
                         }
                         productListInfo.push(newproduct)

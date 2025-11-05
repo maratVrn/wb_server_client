@@ -10,17 +10,13 @@ class ProductListService {
 
     WBCatalogProductList = sequelize.define('test_ok',{
             id              :   {type: DataTypes.INTEGER, primaryKey: true},
-            dtype           :   {type: DataTypes.INTEGER},          // тип склада
-            needUpdate      :   {type: DataTypes.BOOLEAN},      // обновлять ли товар остатки и тп
             price           :   {type: DataTypes.INTEGER},          // максимальная цена товара
             reviewRating	:   {type: DataTypes.FLOAT},            // Рейтинг товара ПО Обзорам
             subjectId       :   {type: DataTypes.INTEGER},          // ИД Позиции в предмета
             brandId         :   {type: DataTypes.INTEGER},          // ИД Позиции в бренда
-            saleCount       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц
             totalQuantity   :   {type: DataTypes.INTEGER},          // Остатки последние
-            saleMoney       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц в руб
             priceHistory    :   {type: DataTypes.JSON},             // История изменения цены Берем с первой позиции в sizes basic (БЕЗ скидки) и product	(со скидкой) - все в в ите чтобы проще хранить
-
+            discount	    :   {type: DataTypes.FLOAT},            // Расчетная скидка товара
 
         },
         { createdAt: false,   updatedAt: false  }  )
@@ -65,17 +61,17 @@ class ProductListService {
 
             console.log('юху');
             // const data = await this.WBCatalogProductList.findAll({limit: 20, order: [['id']]})
-
+            // TODO: тут проверить выборку!!
             const data = await this.WBCatalogProductList.findAll({limit: 20, order: [
-                ['saleCount', 'DESC']  // Получаем поля с максимальными продажами
+                ['discount', 'DESC']  // Получаем поля с максимальными продажами
                 ]})
 
             // const data = await this.WBCatalogProductList.findAll({where:{saleCount:null}})
 
             console.log('Загруженное кол-во '+data.length);
-            for (let i in data) {
-                console.log(data[i].id+'  '+data[i].saleCount);
-            }
+            // for (let i in data) {
+            //     console.log(data[i].id+'  '+data[i].saleCount);
+            // }
 
             // console.log(data);
 

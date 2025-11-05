@@ -88,10 +88,7 @@ class WBService {
                     reviewRating    : productInfo.reviewRating,
                     price           : productInfo.price,
                     discount        : productInfo.discount,
-                    saleCount       : productInfo.saleCount,
-                    saleMoney       : productInfo.saleMoney,
                     totalQuantity   : productInfo.totalQuantity,
-                    qtyMoney        : productInfo.totalQuantity*productInfo.price,
                     photoUrl        : PARSER_LoadLittlePhotoUrl(sortId[i]),
                     name            : cur_i_pi>=0 ? parserProductInfo[cur_i_pi].name : ' ',
                     color           : cur_i_pi>=0 ? parserProductInfo[cur_i_pi].color : ' ',
@@ -103,47 +100,7 @@ class WBService {
         return ProductColorsInfo
     }
 
-    async loadProductAbout(id){
-        let productAbout = {}
-        const shortId = Math.floor(id / 100000)
-        const part = Math.floor(id / 1000)
-        const basket = PARSER_GetBasketFromID(shortId)
-        const url = `https://basket-${basket}.wbbasket.ru/vol${shortId}/part${part}/${id}/info/ru/card.json`
-        let productData = await PARSER_GetIAbout(url)
 
-        let productInfo = await PARSER_GetIdInfo(id)
-
-        const colors = []
-        let sortId = []
-        if (productData.colors) sortId =   productData.colors.sort((a, b) => a - b);
-
-        for (let i in sortId){
-            const idInfo = await  ProductIdService.getIdInfo(sortId[i])
-
-            if (idInfo) {
-                const oneColor = {
-                    id: sortId[i],
-                    photoUrl: PARSER_LoadLittlePhotoUrl(sortId[i])
-                }
-                colors.push(oneColor)
-            }
-        }
-        try {
-
-            const data = {
-                imt_name: productData?.imt_name,
-                nm_colors_names : productData?.nm_colors_names,
-            }
-            productAbout = {
-                data: data,
-                info : productInfo,
-                colors: colors
-            }
-        } catch (err) {console.log(err);  }
-
-
-        return productAbout
-    }
 
 
 

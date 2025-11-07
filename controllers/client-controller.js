@@ -43,8 +43,9 @@ class ClientController {
     async getProductList(req, res, next) {
 
         try {
-            const catalogId = req.params.link
-            const result = await ClientService.getProductList(catalogId)
+
+            let  param = req.body? req.body : {}
+            const result = await ClientService.getProductList(param)
             res.json(result)
         } catch (e) {
             next(e)

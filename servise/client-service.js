@@ -78,13 +78,49 @@ class ClientService {
 
 
 
-    async getProductList (catalogId){
+    async getProductList (param){
         let result = []
-        const loadProducts = await ProductListService.getProductList(catalogId)
-        //TODO: Важно сейчас мы передаем текущий весь продукт лист а если там более 500 штук то запрос не выполнится
-        // Внутри PARSER_GetProductListInfoToClient надо обновить дискаунты!
-        result = await PARSER_GetProductListInfoToClient(loadProducts)
+        const idList = await ProductListService.getProductList(param)
+        const step2 = 350
+        for (let j = 0; j < idList.length; j ++) {
+            try {
 
+                let end_j = j + step2 - 1 < idList.length ? j + step2 - 1 : idList.length - 1
+                let productList = []
+
+                for (let k = j; k <= end_j; k++)
+                    productList.push(idList[k].id)
+
+
+                const updateProductListInfo = await PARSER_GetProductListPriceInfo(productList)
+
+                for (let z in updateProductListInfo)
+                    for (let k in idList)
+                        if (updateProductListInfo[z].id === idList[k].id)
+                            if ((updateProductListInfo[z].totalQuantity>0) && (updateProductListInfo[z].price>0)) {
+
+
+
+                                result.push({
+                                    id               : idList[k].id,
+                                    discount         : idList[k].discount,
+                                    priceHistory     : idList[k].priceHistory,
+                                    price            : updateProductListInfo[z].price,
+                                    photoUrl         : PARSER_LoadMiddlePhotoUrl(idList[k].id),
+                                    totalQuantity    : updateProductListInfo[z].totalQuantity,
+                                    brand            : updateProductListInfo[z].brand ,
+                                    name             : updateProductListInfo[z].name ,
+                                    supplier	     : updateProductListInfo[z].supplier,
+                                    reviewRating     : updateProductListInfo[z].reviewRating,
+                                })
+                                break
+                            }
+                j += step2 - 1
+            } catch (error) {console.log(error) };
+
+
+        }
+        result.sort((a, b) => b.discount - a.discount)
         return result
     }
 

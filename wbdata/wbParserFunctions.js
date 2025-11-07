@@ -413,7 +413,11 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
                             const newProduct = {
                                 id              : currProduct?.id ? currProduct.id : 0,
                                 price           : price,
-                                totalQuantity   : realTotalQuantity
+                                totalQuantity   : realTotalQuantity,
+                                brand            : currProduct?.brand? currProduct?.brand : '',
+                                name             : currProduct?.name? currProduct?.name : '',
+                                supplier	     : currProduct?.supplier? currProduct?.supplier : ''	,
+                                reviewRating     : currProduct?.reviewRating? currProduct?.reviewRating : 0
                             }
 
 

@@ -24,7 +24,7 @@ router.post('/getSearchResult', clientController.getSearchResult)  // Получ
 router.post('/updateIdInfo', clientController.updateIdInfo)        // Получаем актуальные цены по ИД списку и историю ихменения цен
 
 
-router.get('/getProductList/:link', clientController.getProductList)  // Получаем список товаров в заданном каталоге
+router.post('/getProductList', clientController.getProductList)  // Получаем список товаров в заданном каталоге
 
 // Роутеры для получения данных о товаре
 router.get('/getIdInfo/:link', clientController.getIdInfo)  // Получаем список товаров в заданном каталоге

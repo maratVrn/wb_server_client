@@ -53,45 +53,28 @@ class ProductListService {
 
     // ************************* Функции доступа к данным для клиентской части к таблицам таблицами productList *****************************
     // TODO:  Это должно быть реализовани в отдельном сервере
-    async getProductList(catalogId){
-        console.log('catalogId = '+catalogId);
-        const isTable = await this.checkTableName(catalogId)
+    async getProductList(param){
+
+        const catalogId = param.catalogID? param.catalogID : null
+        const idCount = param.idCount? parseInt(param.idCount) : 100
+
         let result = []
-        if (isTable) try {
 
-            console.log('юху');
-            // const data = await this.WBCatalogProductList.findAll({limit: 20, order: [['id']]})
-            // TODO: тут проверить выборку!!
-            const data = await this.WBCatalogProductList.findAll({limit: 20, order: [
-                ['discount', 'DESC']  // Получаем поля с максимальными продажами
-                ]})
-
-            // const data = await this.WBCatalogProductList.findAll({where:{saleCount:null}})
-
-            console.log('Загруженное кол-во '+data.length);
-            // for (let i in data) {
-            //     console.log(data[i].id+'  '+data[i].saleCount);
-            // }
-
-            // console.log(data);
-
-            // const data = await this.WBCatalogProductList.findAll({limit: 100,
-            // where:{saleCount: {[Op.gt]: 1000}}})
-            // const data = await this.WBCatalogProductList.findAll({limit: 20,
-            //     where:{discount : {[Op.gt]: 10} }})
-
-            // for (let i in data) {
-            //     console.log(data[i].id+'  '+data[i].discount);
-            // }
-            if (data) result = data
+        if (catalogId) {
+            const isTable = await this.checkTableName(catalogId)
+            if (isTable) try {
+                const data = await this.WBCatalogProductList.findAll({
+                    limit: idCount, order: [
+                        ['discount', 'DESC']  // Получаем поля с максимальными продажами
+                    ], where: {totalQuantity: {[Op.gt]: 2 }, discount: {[Op.lte]: 70 }}
+                })
+                        if (data) result = data
+            } catch (error) {
+                saveErrorLog('productListService', `Ошибка в checkId tableId ` + catalogId + '  id = ')
+                saveErrorLog('productListService', error)
+                console.log(error);
+            }
         }
-
-        catch (error) {
-            saveErrorLog('productListService',`Ошибка в checkId tableId `+catalogId+'  id = ')
-            saveErrorLog('productListService', error)
-            console.log(error);
-        }
-
         return result
     }
 

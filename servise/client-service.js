@@ -4,6 +4,7 @@ const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList, PARSER_G
 const ProductListService = require('../servise/productList-service')
 const ProductIdService = require('../servise/productId-service')
 const WBService = require('../servise/wb-service')
+const { WBAllSubjects} = require("../models/models");
 
 
 class ClientService {
@@ -98,6 +99,12 @@ class ClientService {
                     for (let k in idList)
                         if (updateProductListInfo[z].id === idList[k].id)
                             if ((updateProductListInfo[z].totalQuantity>0) && (updateProductListInfo[z].price>0)) {
+                                const dt = new Date().toLocaleDateString()
+                                const nowPrice =  {d: dt, sp: updateProductListInfo[z].price, q : updateProductListInfo[z].totalQuantity}
+                                if (idList[k].priceHistory.length>0)
+                                    if (idList[k].priceHistory.at(-1).d === dt) idList[k].priceHistory.pop()
+                                idList[k].priceHistory.push(nowPrice)
+
 
 
 
@@ -112,6 +119,8 @@ class ClientService {
                                     name             : updateProductListInfo[z].name ,
                                     supplier	     : updateProductListInfo[z].supplier,
                                     reviewRating     : updateProductListInfo[z].reviewRating,
+                                    subjectId        : updateProductListInfo[z].subjectId,
+                                    feedbacks        : updateProductListInfo[z].feedbacks,
                                 })
                                 break
                             }
@@ -120,8 +129,12 @@ class ClientService {
 
 
         }
-        result.sort((a, b) => b.discount - a.discount)
-        return result
+        let filters = {subjects:[]}
+        const catalogId = param.catalogID? param.catalogID : null
+        const oneC = await WBAllSubjects.findOne({where: {catalogId: catalogId}})
+
+        if (oneC.subjects) filters.subjects = oneC.subjects
+        return [result, filters]
     }
 
 

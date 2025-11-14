@@ -51,15 +51,6 @@ async function saveProductLIstInfoToCVS(productList,productListInfo ){
 }
 
 
-
-// Обрабатываем JSON ответ с сайта ВБ - и сохраняем в в формате cvs строки с заголовокм `id (Артикул)\tНазвание\tЦена\tСкидка\tЦена со скидкой\n` в файле
-// data - входящие данные для парсинга
-// fName - имя файла в котором сохзраняем данные
-
-
-
-
-
 // Сохранение данных в файлу при загрузке данных
 async function saveProductListToCVSFromLoadData(data, fName, brandName){
     const fileName = fName + '.cvs'

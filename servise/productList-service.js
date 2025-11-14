@@ -55,6 +55,7 @@ class ProductListService {
     // TODO:  Это должно быть реализовани в отдельном сервере
     async getProductList(param){
 
+        // console.log(param);
         const catalogId = param.catalogID? param.catalogID : null
         const idCount = param.idCount? parseInt(param.idCount) : 100
 
@@ -63,10 +64,21 @@ class ProductListService {
         if (catalogId) {
             const isTable = await this.checkTableName(catalogId)
             if (isTable) try {
+                let whereParam = {totalQuantity: {[Op.gt]: 2 }, reviewRating: {[Op.gt]: 3 } , discount: {[Op.lte]: 90 }}
+                // if (param.filters)
+                if (param.filters.isXsubjectFilterChecked) whereParam.subjectId =   {[Op.or]: param.filters.xSubjectIdArray}
+
+                if (param.filters.usePriceMin) whereParam.price =   {[Op.gte]: param.filters.priceMin}
+                if (param.filters.usePriceMax) whereParam.price =   {[Op.lte]: param.filters.priceMax}
+                if ((param.filters.usePriceMin) && (param.filters.usePriceMax)) whereParam.price =   {[Op.between]: [param.filters.priceMin-1,param.filters.priceMax+1]}
+
+
                 const data = await this.WBCatalogProductList.findAll({
                     limit: idCount, order: [
                         ['discount', 'DESC']  // Получаем поля с максимальными продажами
-                    ], where: {totalQuantity: {[Op.gt]: 2 }, discount: {[Op.lte]: 70 }}
+                    ],
+
+                    where: whereParam
                 })
                         if (data) result = data
             } catch (error) {

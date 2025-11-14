@@ -12,11 +12,11 @@ const WBCatalog = sequelize.define('wbCatalog',{
 )
 
 //Список всех категорий товаров
-const WBAllSubjects = sequelize.define('AllSubjects',{
-        id:{type: DataTypes.INTEGER, primaryKey: true},  // Соответсвует subjectId
-        name :{type: DataTypes.STRING},                  // Имя
-        catalogId:{type: DataTypes.INTEGER}              // Ид каталога в который входит данная категория товара
 
+const WBAllSubjects = sequelize.define('AllSubjects',{
+        catalogId:{type: DataTypes.INTEGER, primaryKey: true},      // Соответсвует catalogId таблицы
+        subjects :{type: DataTypes.JSON},                           // предметы
+        addFilters :{type: DataTypes.JSON},                           // Доп фильтры, сейчас цены мин и макс
     },
     { createdAt: false, updatedAt: false })
 

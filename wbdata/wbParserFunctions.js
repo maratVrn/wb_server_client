@@ -411,13 +411,15 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
 
                             }
                             const newProduct = {
-                                id              : currProduct?.id ? currProduct.id : 0,
-                                price           : price,
-                                totalQuantity   : realTotalQuantity,
+                                id               : currProduct?.id ? currProduct.id : 0,
+                                price            : price,
+                                totalQuantity    : realTotalQuantity,
                                 brand            : currProduct?.brand? currProduct?.brand : '',
                                 name             : currProduct?.name? currProduct?.name : '',
                                 supplier	     : currProduct?.supplier? currProduct?.supplier : ''	,
-                                reviewRating     : currProduct?.reviewRating? currProduct?.reviewRating : 0
+                                reviewRating     : currProduct?.reviewRating? currProduct?.reviewRating : 0,
+                                subjectId        : currProduct?.subjectId? currProduct?.subjectId : 0,
+                                feedbacks        : currProduct?.feedbacks? currProduct?.feedbacks : 0,
                             }
 
 

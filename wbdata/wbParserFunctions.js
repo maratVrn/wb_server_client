@@ -168,6 +168,7 @@ async function PARSER_GetIdInfo(id) {
 
                     const data = {
                         price           : price,
+                        name            : resData.name,
                         basicPrice      : basicPrice,
                         discount        : discount,
                         brand           : resData.brand,
@@ -221,162 +222,6 @@ async function PARSER_GetSupplierSubjects(supplierId) {
     return supplierSubjectsList
 }
 
-
-async function PARSER_LoadIdListBySearchParam(searchParam) {
-
-
-    let idList = []
-    let data = []
-    let addQuery = []
-
-    const searchQuery = searchParam.searchQuery? searchParam.searchQuery : ''
-    // const maxPage = searchParam.pageCount? searchParam.pageCount : 1
-
-    const maxPage= 1
-    // console.log(searchParam);
-    // console.log('searchQuery ' + searchQuery);
-    // console.log('maxPage ' + maxPage);
-    let needGetData = true
-    let needGetNextProducts = true
-
-    // Получим фильтры
-
-    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-        try {
-
-            let url = `https://u-search.wb.ru/exactmatch/ru/common/v18/search?ab_testing=false&ab_testing=false&appType=1&autoselectFilters=false&curr=rub&dest=-1255987&inheritFilters=false&lang=ru&query=`+
-            searchQuery+`&resultset=filters&spp=30&suppressSpellcheck=false`
-            url = encodeURI(url)
-
-            await axios.get(url, ProxyAndErrors.config).then(response => {
-                data = response.data?.data? response.data.data : []
-            })
-            needGetData = false
-
-        } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_LoadIdListBySearchParam', 'getFilters')}
-    }
-
-    // Получим доп ссылки
-    needGetData = true
-        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-            try {
-
-                let url = `https://u-search-tags.wb.ru/search-tags/api/v2/search/query?query=`+ searchQuery
-                url = encodeURI(url)
-
-                await axios.get(url, ProxyAndErrors.config).then(response => {
-                    addQuery = response.data?.query? response.data.query : []
-                })
-                needGetData = false
-
-            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_LoadIdListBySearchParam', 'getFilters')}
-        }
-
-    // Получим списки товаров
-    needGetData = true
-
-    for (let i = 1; i <= maxPage; i++) {
-        let page = i
-        needGetData = true
-        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-            try {
-
-                let  url2 = `https://u-search.wb.ru/exactmatch/ru/common/v18/search?ab_testing=false&appType=1&curr=rub&dest=33&inheritFilters=false&lang=ru&page=${page}&query=`+
-                    searchQuery+`&resultset=catalog&sort=popular&spp=30&suppressSpellcheck=false`
-
-                url2 = encodeURI(url2)
-
-                await axios.get(url2,  ProxyAndErrors.config).then(response => {
-                    const products = response.data?.products? response.data?.products : []
-                    if (products) {
-
-                        for (let k in products)
-                            try {
-                                let price = 0
-                                let basicPrice = 0
-                                let discount = 0
-                                let totalQuantity = products[k].totalQuantity? products[k].totalQuantity : 0
-
-                                if (totalQuantity > 0) {
-                                    // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
-                                    if (products[k].sizes)
-                                    for (let z in products[k].sizes) {
-                                        if (products[k].sizes[z]?.price) {
-                                            price = products[k].sizes[z]?.price?.product ? Math.round(parseInt(products[k].sizes[z]?.price?.product) / 100) : -1
-                                            basicPrice = products[k].sizes[z]?.price?.basic ? Math.round(parseInt(products[k].sizes[z]?.price?.basic) / 100) : -1
-                                            if (basicPrice>0) discount = Math.round( 100 * (basicPrice - price)/basicPrice )
-                                            break
-                                        }
-                                    }
-                                }
-                                idList.push({
-                                    id               : products[k].id,
-                                    price           : price,
-                                    basicPrice      : basicPrice,
-                                    discount        : discount,
-                                    brand            : products[k].brand? products[k].brand : '',
-                                    name             : products[k].name? products[k].name : '',
-                                    supplier	     : products[k].supplier? products[k].supplier : ''	,
-                                    supplierRating   : products[k].supplierRating? products[k].supplierRating : 0,
-                                    reviewRating     : products[k].reviewRating? products[k].reviewRating : 0,
-                                    totalQuantity    : totalQuantity,
-                                    photoUrl        : '',
-                                })
-                            } catch (e) {}
-
-
-                        try { if (products.length<100) needGetNextProducts = false } catch (e) {needGetNextProducts = false}
-
-                    }
-                })
-                needGetData = false
-
-            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_LoadIdListBySearchParam', 'page = '+page)}
-        }
-        if (!needGetNextProducts) break
-    }
-
-    // Получим актуальные цена на "сейчас" и остатки
-    const step2 = 350
-    for (let j = 0; j < idList.length; j ++) {
-        try {
-
-            let end_j = j + step2 - 1 < idList.length ? j + step2 - 1 : idList.length - 1
-            let productList = []
-
-            for (let k = j; k <= end_j; k++)
-                productList.push(idList[k].id)
-
-
-            const updateProductListInfo = await PARSER_GetProductListPriceInfo(productList)
-
-            for (let z in updateProductListInfo) {
-                for (let k in idList)
-                    if (updateProductListInfo[z].id === idList[k].id) {
-
-                        idList[k].price = updateProductListInfo[z].price
-                        idList[k].totalQuantity = updateProductListInfo[z].totalQuantity
-                        break
-                    }
-            }
-            j += step2 - 1
-
-        } catch (error) {
-            console.log(error);
-        }
-        // break
-
-    }
-
-    // TODO: Сделаем расчет параметров и отсортируем список
-
-    const result = {
-        idList : idList,
-        data : data,
-        addQuery : addQuery
-    }
-    return result
-}
 
 async function PARSER_GetProductListPriceInfo(productIdList) {
     let productListInfo = []
@@ -760,6 +605,8 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
     return productListInfo
 }
 
+
+
 async function PARSER_GetProductPositionToClient(id, searchWord) {
     // console.log(id);
     // console.log(searchWord);
@@ -838,6 +685,6 @@ async function PARSER_GetProductPositionToClient(id, searchWord) {
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_GetProductListInfo_LITE_ToClient,
     PARSER_GetProductListInfoToClient,PARSER_GetIAbout,PARSER_GetIdInfo,PARSER_SupplierProductIDList,
-    PARSER_GetProductPositionToClient,PARSER_LoadCompetitorSeeAlsoInfo, PARSER_SupplierInfo, PARSER_LoadIdListBySearchParam,
+    PARSER_GetProductPositionToClient,PARSER_LoadCompetitorSeeAlsoInfo, PARSER_SupplierInfo,
     PARSER_GetProductListPriceInfo, PARSER_GetBasketFromID, PARSER_LoadLittlePhotoUrl, PARSER_LoadMiddlePhotoUrl
 }

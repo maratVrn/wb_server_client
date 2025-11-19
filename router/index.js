@@ -20,7 +20,7 @@ router.get('/getLiteWBCatalog', wbController.getLiteWBCatalog)         //Заг�
 
 
 // Роутеры для получения данных о товаре
-router.post('/getSearchResult', clientController.getSearchResult)  // Получаем список по поисковому запросу TODO: должно быть реализовано в клиенте чтобы не згрузить сервер
+router.post('/getSearchResult', clientController.getSearchResult)  // Получаем список по поисковому запросу
 router.post('/updateIdInfo', clientController.updateIdInfo)        // Получаем актуальные цены по ИД списку и историю ихменения цен
 
 
@@ -32,6 +32,9 @@ router.get('/getIdInfo/:link', clientController.getIdInfo)  // Получаем 
 
 router.get('/getProductStartInfo/:link', clientController.getProductStartInfo)  // Получаем список товаров в заданном каталоге
 router.get('/getProductInfo/:link', clientController.getProductInfo)            // Получаем список товаров в заданном каталоге
+
+
+
 router.get('/getProductColorsInfo/:link', clientController.getProductColorsInfo)
 router.get('/getSupplierInfo/:link', clientController.getSupplierInfo)
 router.post('/getPositionsInfo', clientController.getPositionsInfo)

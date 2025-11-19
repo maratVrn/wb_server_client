@@ -28,37 +28,6 @@ class WBService {
     }
 
 
-    async loadSubjects_fromWB (catalogData){
-        let allSubjects = []
-        console.log('catalogData.length '+catalogData.length);
-        if (catalogData.length){
-
-            for (let i in catalogData) {
-
-                // if (i>1) break // TODO: для отлалдки
-                console.log('----> '+i);
-                const currResult = await PARSER_GetBrandAndCategoriesList(catalogData[i])
-                if (currResult)
-                    for (let j in catalogData[i].subjectList){
-                        const oneSubject = {
-                            id : catalogData[i].subjectList[j].id,
-                            name : catalogData[i].subjectList[j].name,
-                            catalogId : catalogData[i].id
-                        }
-                        allSubjects.push(oneSubject)
-                    }
-
-                // if (!currResult) {
-                //     saveErrorLog('wb-Service',`Остановка в процедуре загрузки каталогов на catalogId `+catalogData[i].id.toString())
-                //
-                //     break
-                // }
-            }
-        }
-        return allSubjects
-    }
-
-
     async loadProductColorsInfo(id){
         let ProductColorsInfo = []
         const shortId = Math.floor(id / 100000)

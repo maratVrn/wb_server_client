@@ -27,11 +27,10 @@ class ClientController {
 
             const searchParam = {
                 searchQuery :   req.body.searchQuery? req.body.searchQuery : '',
-                pageCount   :   req.body.pageCount? req.body.pageCount : 1,
+                param   :   req.body.param? req.body.param : {},
             }
 
-            console.log(searchParam);
-            const result = await ClientService.getSearchResult(searchParam)
+            const result =  await ClientService.getSearchResult(searchParam)
             res.json(result)
 
         } catch (e) {

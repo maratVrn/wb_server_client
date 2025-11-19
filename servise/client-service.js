@@ -1,9 +1,9 @@
 
 const {PARSER_GetProductListInfoToClient, PARSER_SupplierProductIDList, PARSER_GetIdInfo,PARSER_LoadCompetitorSeeAlsoInfo,
-    PARSER_SupplierInfo, PARSER_LoadIdListBySearchParam, PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions")
+    PARSER_SupplierInfo, PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions")
 const ProductListService = require('../servise/productList-service')
 const ProductIdService = require('../servise/productId-service')
-const WBService = require('../servise/wb-service')
+const MySearch = require('../wbdata/search')
 const { WBAllSubjects} = require("../models/models");
 
 
@@ -12,7 +12,9 @@ class ClientService {
 
 
     async getSearchResult (searchParam){
-        const result = await PARSER_LoadIdListBySearchParam(searchParam)
+
+        const result = MySearch.getSearchParam(searchParam.searchQuery)
+        console.log(result);
         return result
     }
 
@@ -133,12 +135,9 @@ class ClientService {
         const catalogId = param.catalogID? param.catalogID : null
         const oneC = await WBAllSubjects.findOne({where: {catalogId: catalogId}})
 
-        if (oneC.subjects) filters.subjects = oneC.subjects
+        if (oneC) if (oneC.subjects) filters.subjects = oneC.subjects
         return [result, filters]
     }
-
-
-
     async loadCompetitorSeeAlsoInfo(id){
         let result = []
         const [idList, onlyIdList] = await PARSER_LoadCompetitorSeeAlsoInfo(id, true)
@@ -153,7 +152,6 @@ class ClientService {
         result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
         return result
     }
-
     async loadCompetitorSeePhotoInfo(id){
         let result = []
         const [idList, onlyIdList] = await PARSER_LoadCompetitorSeeAlsoInfo(id, false, true)
@@ -161,8 +159,6 @@ class ClientService {
         result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
         return result
     }
-
-
     async getSupplierInfo(supplierId){
         let result = []
 
@@ -173,7 +169,6 @@ class ClientService {
         result = await  this.getResultProductInfoList_ByControlIdListByList(controlIdList, idList)
         return [result,supplierInfo]
     }
-
     // Подгрузим информацию по ид-кам и вернем полную картину из нашей БД
     async  getResultProductInfoList_ByControlIdListByList (controlIdList,idList){
         let result = []
@@ -221,10 +216,11 @@ class ClientService {
         let isInBase = false
         let idInfoWB = []
         let productInfo = []
+        let idInfo = []
 
         try {
             idInfoWB = await PARSER_GetIdInfo(id)
-            const idInfo = await ProductIdService.getIdInfo(id)
+            idInfo = await ProductIdService.getIdInfo(id)
             if (idInfo) {
                 isInBase = true
                 productInfo = await ProductListService.getProductInfo(idInfo)
@@ -234,7 +230,7 @@ class ClientService {
 
             }
         } catch (e) { console.log(e);}
-        return {isInWB : isInWB, isInBase : isInBase, idInfoWB : idInfoWB, productInfo : productInfo}
+        return {isInWB : isInWB, isInBase : isInBase, idInfoWB : idInfoWB, productInfo : productInfo, idInfo : idInfo}
     }
 
     async getProductInfo (id){

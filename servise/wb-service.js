@@ -28,49 +28,6 @@ class WBService {
     }
 
 
-    async loadProductColorsInfo(id){
-        let ProductColorsInfo = []
-        const shortId = Math.floor(id / 100000)
-        const part = Math.floor(id / 1000)
-        const basket = this.getBasketFromID(shortId)
-        const url = `https://basket-${basket}.wbbasket.ru/vol${shortId}/part${part}/${id}/info/ru/card.json`
-        let productData = await PARSER_GetIAbout(url)
-        let sortId = []
-        // sortId.push(id)
-        if (productData.colors) sortId =   productData.colors.sort((a, b) => a - b);
-        const parserProductInfo = await PARSER_GetProductListInfo_LITE_ToClient(sortId)
-        console.log('PARSER_GetProductListInfo_LITE_ToClient');
-        // console.log(sortId);
-        // console.log(parserProductInfo);
-
-        for (let i in sortId){
-            const idInfo = await  ProductIdService.getIdInfo(sortId[i])
-
-            if (idInfo) {
-
-                let cur_i_pi = -1
-                for (let k in parserProductInfo)
-                    if (parserProductInfo[k].id === sortId[i]) { cur_i_pi = k; break}
-
-
-                const productInfo = await ProductListService.getProductInfo(idInfo)
-
-                const oneColor = {
-                    id              : sortId[i],
-                    reviewRating    : productInfo.reviewRating,
-                    price           : productInfo.price,
-                    discount        : productInfo.discount,
-                    totalQuantity   : productInfo.totalQuantity,
-                    photoUrl        : PARSER_LoadLittlePhotoUrl(sortId[i]),
-                    name            : cur_i_pi>=0 ? parserProductInfo[cur_i_pi].name : ' ',
-                    color           : cur_i_pi>=0 ? parserProductInfo[cur_i_pi].color : ' ',
-                    priceHistory    : productInfo.priceHistory ? productInfo.priceHistory : [],
-                }
-                ProductColorsInfo.push(oneColor)
-            }
-        }
-        return ProductColorsInfo
-    }
 
 
 

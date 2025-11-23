@@ -280,166 +280,6 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
 }
 
 
-async function PARSER_LoadCompetitorSeeAlsoInfo(id, seeAlso = true, seePhoto = false, SeeFind = false, findWord = '' ) {
-    let idList = []
-    let onlyIdList = []
-    let needGetData = true
-        needGetData = true
-        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-            try {
-
-                let url = ''
-                if (seeAlso) url = `https://recom.wb.ru/recom/ru/common/v5/search?ab_own_sim=new30&appType=1&curr=rub&dest=12358291&lang=ru&page=1&query=%D0%BF%D0%BE%D1%85%D0%BE%D0%B6%D0%B8%D0%B5%20${id}&resultset=catalog&spp=30`
-                    else
-                        if (seePhoto) url = `https://recom.wb.ru/visual/ru/common/v5/search?appType=1&curr=rub&dest=12358291&lang=ru&page=1&query=${id}&resultset=catalog&spp=30&suppressSpellcheck=false`
-                            else if (SeeFind) {
-                            url = `https://search.wb.ru/exactmatch/ru/common/v9/search?ab_testing=false&appType=1&curr=rub&dest=12358291&lang=ru&page=1&query=`+
-                                findWord+'&resultset=catalog&sort=popular&spp=30'
-                            url = encodeURI(url)
-                        }
-                await axios.get(url, ProxyAndErrors.config).then(response => {
-                    const resData = response.data
-
-                    if (resData?.data?.products) {
-
-                        for (let k in resData?.data?.products)
-                            try {
-
-                                idList.push({
-                                    id              : resData?.data?.products[k].id,
-                                    pos             : parseInt(k)+1,
-                                    brand           : resData?.data?.products[k].brand,
-                                    name	        : resData?.data?.products[k].name	,
-                                    supplier	    : resData?.data?.products[k].supplier,
-                                    supplierId	    : resData?.data?.products[k].supplierId,
-
-                                })
-                                onlyIdList.push(resData?.data?.products[k].id)
-
-                            } catch (e) {}
-
-
-                    }
-                })
-                needGetData = false
-
-            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_LoadCompetitorSeeAlsoInfo', 'id '+id.toString())}
-        }
-    return [idList, onlyIdList]
-}
-
-// Получаем информацию по селлеру
-
-async function PARSER_SupplierInfo(supplierId, maxPage=30){
-    let supplierInfo = {}
-    let needGetData = true
-    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-        try {
-            const url2 = `https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/${supplierId}.json`
-            await axios.get(url2, ProxyAndErrors.config).then(response => {
-                supplierInfo = response.data
-            })
-            needGetData = false
-
-        } catch (err) {
-            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_SupplierInfo', 'supplierId ' + supplierId.toString())
-        }
-
-    }
-    return supplierInfo
-}
-
-// Получаем список товарв для выбранного предмета и типа сортировки
-async function PARSER_SupplierProductIDList(supplierId, maxPage=30){
-    let idList = []
-    let onlyIdList = []
-    let needGetData = true
-    let needGetNextProducts = true
-    const supplierSubjectsList = await PARSER_GetSupplierSubjects(supplierId)
-
-    for (let i = 1; i <= maxPage; i++) {
-        let page = i
-        needGetData = true
-        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-            try {
-
-
-                const url2 =`https://catalog.wb.ru/sellers/v2/catalog?ab_testing=false&appType=1&curr=rub&dest=12358291&lang=ru&page=${page}&sort=popular&spp=30&supplier=${supplierId}`
-                await axios.get(url2,  ProxyAndErrors.config).then(response => {
-                    const resData = response.data
-                    if (resData?.data?.products) {
-                        console.log(resData?.data?.products.length);
-                        for (let k in resData?.data?.products)
-                            try {
-                                let subjectId = 0
-                                let subjectName = ''
-                                if (resData?.data?.products[k].subjectId){
-                                    subjectId = resData?.data?.products[k].subjectId
-                                    for (let j in supplierSubjectsList)
-                                        if (supplierSubjectsList[j].id === subjectId) {
-                                            subjectName = supplierSubjectsList[j].name
-                                            break
-                                        }
-                                }
-
-                                idList.push({ id    : resData?.data?.products[k].id,
-                                    subjectId       : subjectId,
-                                    subjectName     : subjectName
-                                })
-                                onlyIdList.push(resData?.data?.products[k].id)
-
-                            } catch (e) {}
-                        try { if (resData?.data?.products.length<100) needGetNextProducts = false } catch (e) {needGetNextProducts = false}
-
-                    }
-                })
-                needGetData = false
-
-            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_SupplierProductIDList', 'supplierId '+supplierId.toString())}
-        }
-        if (!needGetNextProducts) break
-    }
-    return [idList, onlyIdList]
-}
-
-// Получаем бренд лист для выбранного каталога
-async function PARSER_GetBrandsAndSubjectsList(catalogParam, needBrands = true) {
-    let brandList = []
-    let subjectList = []
-    let needGetData = true
-    while (needGetData) {
-        try {
-            if (needBrands) {
-                // Загрузим Список брендов
-                saveParserProductListLog(catalogParam.name, 'Получаем бренды в каталоге')
-                const url = `https://catalog.wb.ru/catalog/${catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${catalogParam.query}&curr=rub&dest=-3390370&filters=ffbrand&spp=30`
-                saveParserProductListLog(catalogParam.name, `Начинаем загрузку брендов по ссылке: ` + url)
-                await axios.get(url, ProxyAndErrors.config).then(response => {
-                    const resData = response.data
-                    if (resData?.data?.filters[0]) {
-                        brandList = resData?.data?.filters[0].items
-                        let brandCount = brandList.length ? brandList.length : 0
-                        saveParserProductListLog(catalogParam.name, 'Бренды успешно загруженны, колличество брендов ' + brandCount.toString())
-                    }
-                    needGetData = false
-                })
-            }
-            // Загрузим Список категорий товаров
-            needGetData = true
-            saveParserProductListLog(catalogParam.name, 'Получаем список категорий товаров  в каталоге')
-            const url2 = `https://catalog.wb.ru/catalog/${catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${catalogParam.query}&curr=rub&dest=-3390370&filters=xsubject&spp=30`
-            await axios.get(url2, {proxy: global.axiosProxy} ).then(response => {
-                const resData = response.data
-                if (resData?.data?.filters[0]) {
-                    subjectList = resData?.data?.filters[0].items
-                    let subjectCount = subjectList.length ? subjectList.length : 0
-                }
-                needGetData = false
-            })
-        } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetBrandsAndSubjectsList', 'catalogParam '+catalogParam.toString())}
-    }
-    return [brandList, subjectList]
-}
 
 // Берем актуальную информацию по товарам для отображения на клиенте (упрощенный вариант)
 async function PARSER_GetProductListInfo_LITE_ToClient(productIdList) {
@@ -605,8 +445,6 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
     return productListInfo
 }
 
-
-
 async function PARSER_GetProductPositionToClient(id, searchWord) {
     // console.log(id);
     // console.log(searchWord);
@@ -679,12 +517,9 @@ async function PARSER_GetProductPositionToClient(id, searchWord) {
 }
 
 
-
-
-
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_GetProductListInfo_LITE_ToClient,
-    PARSER_GetProductListInfoToClient,PARSER_GetIAbout,PARSER_GetIdInfo,PARSER_SupplierProductIDList,
-    PARSER_GetProductPositionToClient,PARSER_LoadCompetitorSeeAlsoInfo, PARSER_SupplierInfo,
+    PARSER_GetProductListInfoToClient,PARSER_GetIAbout,PARSER_GetIdInfo,
+    PARSER_GetProductPositionToClient,
     PARSER_GetProductListPriceInfo, PARSER_GetBasketFromID, PARSER_LoadLittlePhotoUrl, PARSER_LoadMiddlePhotoUrl
 }

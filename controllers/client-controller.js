@@ -7,19 +7,6 @@ class ClientController {
 
 
 
-    async updateIdInfo(req, res, next) {
-
-        try {
-
-            let  idList = req.body.idList? req.body.idList : ''
-            const result = await ClientService.getNowPriceInfo(idList)
-            res.json(result)
-
-        } catch (e) {
-            next(e)
-        }
-
-    }
 
     async getSearchResult(req, res, next) {
 
@@ -38,7 +25,6 @@ class ClientController {
         }
 
     }
-
     async getProductList(req, res, next) {
 
         try {
@@ -51,23 +37,6 @@ class ClientController {
         }
 
     }
-
-
-    async getIdInfo(req, res, next) {
-
-        try {
-            const id = req.params.link
-            const result = await ClientService.getIdInfo(id)
-
-            res.json(result)
-
-        } catch (e) {
-            next(e)
-        }
-
-    }
-
-
     async getProductStartInfo(req, res, next) {
 
         try {
@@ -81,7 +50,6 @@ class ClientController {
         }
 
     }
-
     async getProductInfo(req, res, next) {
 
         try {
@@ -112,48 +80,6 @@ class ClientController {
         }
 
     }
-
-    async getSupplierInfo(req, res, next) {
-
-        try {
-            const supplierId = req.params.link
-            let result = []
-            if (supplierId) {
-                result = await ClientService.getSupplierInfo(supplierId)
-            }
-            res.json(result)
-
-        } catch (e) {
-            next(e)
-        }
-
-    }
-
-    async getCompetitorSeeAlsoInfo(req, res, next) {
-        try {
-            const id = req.params.link
-            let result = []
-            if (id)  result = await ClientService.loadCompetitorSeeAlsoInfo(id)
-            res.json(result)
-        } catch (e) {  next(e)  }
-    }
-
-
-    async getCompetitorSeeFindInfo(req, res, next) {
-        try {
-            console.log('tut');
-            const id = req.body.id
-            let result = []
-            if (id) {
-                const findText  = req.body.findText
-                result =   await ClientService.loadCompetitorSeeFindInfo(id, findText)
-
-            }
-            res.json(result)
-
-        } catch (e) {  next(e)  }
-    }
-
     async duplicateTest(req, res, next) {
         try {
 
@@ -185,31 +111,7 @@ class ClientController {
 
         } catch (e) {  next(e)  }
     }
-
-    async getCompetitorSeePhotoInfo(req, res, next) {
-        try {
-            const id = req.params.link
-            let result = []
-            if (id)  result = await ClientService.loadCompetitorSeePhotoInfo(id)
-            res.json(result)
-        } catch (e) {  next(e)  }
-    }
-
-
-
-
-
-    async getProductColorsInfo(req, res, next) {
-        try {
-            const id = req.params.link
-            let result = []
-            if (id)  result = await WBService.loadProductColorsInfo(id)
-            res.json(result)
-        } catch (e) {  next(e)  }
-    }
-
-
-      async searchTest(req, res, next) {
+    async searchTest(req, res, next) {
 
         try {
 

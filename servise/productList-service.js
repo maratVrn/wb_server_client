@@ -52,41 +52,48 @@ class ProductListService {
 
 
     // ************************* Функции доступа к данным для клиентской части к таблицам таблицами productList *****************************
-    // TODO:  Это должно быть реализовани в отдельном сервере
+
     async getProductList(param){
 
         // console.log(param);
-        const catalogId = param.catalogID? param.catalogID : null
+        const catalogIdList = param.catalogIdList? param.catalogIdList : null
         const idCount = param.idCount? parseInt(param.idCount) : 100
 
         let result = []
 
-        if (catalogId) {
-            const isTable = await this.checkTableName(catalogId)
-            if (isTable) try {
-                let whereParam = {totalQuantity: {[Op.gt]: 2 }, reviewRating: {[Op.gt]: 3 } , discount: {[Op.lte]: 90 }}
-                // if (param.filters)
-                if (param.filters.isXsubjectFilterChecked) whereParam.subjectId =   {[Op.or]: param.filters.xSubjectIdArray}
+        for (let k in catalogIdList) {
+            const catalogId = parseInt(catalogIdList[k])
 
-                if (param.filters.usePriceMin) whereParam.price =   {[Op.gte]: param.filters.priceMin}
-                if (param.filters.usePriceMax) whereParam.price =   {[Op.lte]: param.filters.priceMax}
-                if ((param.filters.usePriceMin) && (param.filters.usePriceMax)) whereParam.price =   {[Op.between]: [param.filters.priceMin-1,param.filters.priceMax+1]}
+            if (catalogId) {
+                const isTable = await this.checkTableName(catalogId)
+                if (isTable) try {
+                    let whereParam = {totalQuantity: {[Op.gt]: 2}, reviewRating: {[Op.gt]: 3}, discount: {[Op.lte]: 90}}
+                    // if (param.filters)
+                    if (param.filters.isXsubjectFilterChecked) whereParam.subjectId = {[Op.or]: param.filters.xSubjectIdArray}
+
+                    if (param.filters.usePriceMin) whereParam.price = {[Op.gte]: param.filters.priceMin}
+                    if (param.filters.usePriceMax) whereParam.price = {[Op.lte]: param.filters.priceMax}
+                    if ((param.filters.usePriceMin) && (param.filters.usePriceMax)) whereParam.price = {[Op.between]: [param.filters.priceMin - 1, param.filters.priceMax + 1]}
 
 
-                const data = await this.WBCatalogProductList.findAll({
-                    limit: idCount, order: [
-                        ['discount', 'DESC']  // Получаем поля с максимальными продажами
-                    ],
+                    const data = await this.WBCatalogProductList.findAll({
+                        limit: idCount, order: [
+                            ['discount', 'DESC']  // Получаем поля с максимальными продажами
+                        ],
 
-                    where: whereParam
-                })
-                        if (data) result = data
-            } catch (error) {
-                saveErrorLog('productListService', `Ошибка в checkId tableId ` + catalogId + '  id = ')
-                saveErrorLog('productListService', error)
-                console.log(error);
+                        where: whereParam
+                    })
+                    if (data) result = [...result, ...data]
+                } catch (error) {
+                    saveErrorLog('productListService', `Ошибка в checkId tableId ` + catalogId + '  id = ')
+                    saveErrorLog('productListService', error)
+                    console.log(error);
+                }
+
             }
+
         }
+
         return result
     }
 

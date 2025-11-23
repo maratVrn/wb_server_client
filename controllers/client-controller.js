@@ -30,7 +30,7 @@ class ClientController {
         try {
 
             let  param = req.body? req.body : {}
-            const result = await ClientService.getProductList(param)
+               const result = await ClientService.getProductList(param)
             res.json(result)
         } catch (e) {
             next(e)

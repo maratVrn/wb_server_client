@@ -53,6 +53,7 @@ class ClientService {
 
 
     async getProductList (param){
+
         let result = []
         const idList = await ProductListService.getProductList(param)
         const step2 = 350
@@ -103,6 +104,7 @@ class ClientService {
 
         }
         let filters = {subjects:[]}
+        console.log(param);
         const catalogId = param.catalogIdList[0]? param.catalogIdList[0] : null
         const oneC = await WBAllSubjects.findOne({where: {catalogId: catalogId}})
 

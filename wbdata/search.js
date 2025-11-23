@@ -26,32 +26,11 @@ class MySearch {
 
     async loadSearchArray(){
         this.searchArray =  await this.SearchData.findOne({where : {id : 1}})
-        console.log('Поисковые фразы загружены');
+        console.log('Поисковые фразы загружены, кол-во баз в базе '+ this.searchArray.searchDataArray.length);
 
 
     }
 
-    async saveSearchArrayToJsonFile (){
-
-        let  time2 = performance.now()
-        console.log('--- Сохраняем в файл allSearch.txt ---');
-        let fs = require('fs');
-        // await fs.writeFile('log/allSearch.txt', JSON.stringify(this.searchArray.searchDataArray), function(err) {
-        //     if (err) { console.log(err);  }}, null);
-
-        console.log('-----------------  result  ---------------------');
-
-        // Чтение из файла
-        // const a = await fs.readFileSync('log/allSearch.txt', 'utf8')
-        // const jsonData = JSON.parse(a)
-        // console.log(jsonData[0]);
-
-
-        let time1 = performance.now()
-        console.log(`Затраченное время ${(time1 - time2)/1000} сек`)
-
-        return 'saveSearchArrayToJsonFile Ok'
-    }
 
 
     // Определение параметров запроса для сервера исходя из поисковой фразы

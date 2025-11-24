@@ -111,19 +111,7 @@ class ClientController {
 
         } catch (e) {  next(e)  }
     }
-    async searchTest(req, res, next) {
 
-        try {
-
-            const result = await WordStatisticService.test()
-
-            res.json(result)
-
-        } catch (e) {
-            next(e)
-        }
-
-    }
 
 
 }

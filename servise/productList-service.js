@@ -53,7 +53,7 @@ class ProductListService {
 
     // ************************* Функции доступа к данным для клиентской части к таблицам таблицами productList *****************************
 
-    async getProductList(param){
+    async getProductList(param, startCatalogSearch = false){
 
         // console.log(param);
         const catalogIdList = param.catalogIdList? param.catalogIdList : null
@@ -69,6 +69,9 @@ class ProductListService {
                 if (isTable) try {
                     let whereParam = {totalQuantity: {[Op.gt]: 2}, reviewRating: {[Op.gt]: 3}, discount: {[Op.lte]: 90}}
                     // if (param.filters)
+                    if (startCatalogSearch) whereParam.subjectId = {[Op.or]: param.filters.xSubjectIdArray}
+                    // if (startCatalogSearch) whereParam.subjectId = {[Op.not]: param.filters.xSubjectIdArray}
+
                     if (param.filters.isXsubjectFilterChecked) whereParam.subjectId = {[Op.or]: param.filters.xSubjectIdArray}
 
                     if (param.filters.usePriceMin) whereParam.price = {[Op.gte]: param.filters.priceMin}

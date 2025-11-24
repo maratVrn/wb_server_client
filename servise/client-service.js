@@ -55,7 +55,24 @@ class ClientService {
     async getProductList (param){
 
         let result = []
-        const idList = await ProductListService.getProductList(param)
+
+        let filters = {subjects:[]}
+
+
+        const catalogId = param?.catalogIdList[0]? param.catalogIdList[0] : null
+        const oneC = await WBAllSubjects.findOne({where: {catalogId: catalogId}})
+        if (oneC) if (oneC.subjects) filters.subjects = oneC.subjects
+        // Добавим предметы если их нет и каталог 1 (это в случсае запроса по каталогу
+        let startCatalogSearch = false
+
+        if ((param?.catalogIdList?.length === 1) && (param?.filters?.xSubjectIdArray?.length === 0)) {
+            for (let i in filters.subjects)
+                param?.filters?.xSubjectIdArray.push(filters.subjects[i].id)
+
+            startCatalogSearch = true
+        }
+
+        const idList = await ProductListService.getProductList(param, startCatalogSearch)
         const step2 = 350
         for (let j = 0; j < idList.length; j ++) {
             try {
@@ -103,12 +120,7 @@ class ClientService {
 
 
         }
-        let filters = {subjects:[]}
-        console.log(param);
-        const catalogId = param.catalogIdList[0]? param.catalogIdList[0] : null
-        const oneC = await WBAllSubjects.findOne({where: {catalogId: catalogId}})
 
-        if (oneC) if (oneC.subjects) filters.subjects = oneC.subjects
         return [result, filters]
     }
 

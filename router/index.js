@@ -30,13 +30,9 @@ router.get('/getProductStartInfo/:link', clientController.getProductStartInfo)  
 router.get('/getProductInfo/:link', clientController.getProductInfo)            // Получаем список товаров в заданном каталоге
 
 
-
 router.post('/getPositionsInfo', clientController.getPositionsInfo)
 
 
-// Роутеры для работы со статистикой запросов
-router.get('/searchTest', clientController.searchTest)  // Получаем список товаров в заданном каталоге
-router.post('/searchWordsUpload', clientController.searchTest)  // Получаем список товаров в заданном каталоге
 
 
 // router.post('/registration',

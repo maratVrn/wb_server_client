@@ -8,8 +8,10 @@ class WbController{
     async getLiteWBCatalog (req, res, next) {
 
         try {
+            // console.log(req);
             const allWBCatalog  = await wbService.getLiteWBCatalog()
             res.json(allWBCatalog)
+
         } catch (e) {
             console.log(e);
             next(e)
@@ -20,10 +22,10 @@ class WbController{
 
     async test (req, res, next) {
         try {
-            // const testResult = 'isOk'
+            const testResult = 'isOk'
+            console.log('tut');
 
-
-            const testResult  = await getTestData()
+            // const testResult  = await getTestData()
             res.json(testResult)
         } catch (e) {
             console.log(e);

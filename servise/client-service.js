@@ -1,5 +1,5 @@
 
-const { PARSER_GetIdInfo, PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions")
+const { PARSER_GetIdInfo, PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl, PARSER_GetSimilarProducts} = require("../wbdata/wbParserFunctions")
 const ProductListService = require('../servise/productList-service')
 const ProductIdService = require('../servise/productId-service')
 const MySearch = require('../wbdata/search')
@@ -14,7 +14,7 @@ class ClientService {
 
 
         const searchData = MySearch.getSearchParam(searchParam.searchQuery)
-        console.log(searchData);
+        // console.log(searchData);
         let param = {catalogIdList : searchData.catalogIdList, idCount: searchParam.param.idCount,
             filters : searchParam.param.filters
         }
@@ -126,6 +126,47 @@ class ClientService {
 
 
 
+    async getSimilarProducts (id){
+        let similarProducts = []
+        try {
+
+            const products = await PARSER_GetSimilarProducts(id)
+            let onlyIdList = []
+            for (let i in products) onlyIdList.push(products[i].id)
+            const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
+            let idList = await ProductListService.getProductsInfoListByControlIdLis(controlIdList)
+            for (let z in products)
+                for (let k in idList)
+                    if (products[z].id === idList[k].id)
+                        if ((products[z].totalQuantity>0) && (products[z].price>0)) {
+                            const dt = new Date().toLocaleDateString()
+                            const nowPrice =  {d: dt, sp: products[z].price, q : products[z].totalQuantity}
+                            if (idList[k].priceHistory.length>0)
+                                if (idList[k].priceHistory.at(-1).d === dt) idList[k].priceHistory.pop()
+                            idList[k].priceHistory.push(nowPrice)
+                            similarProducts.push({
+                                id               : idList[k].id,
+                                discount         : idList[k].discount,
+                                priceHistory     : idList[k].priceHistory,
+                                price            : products[z].price,
+                                photoUrl         : PARSER_LoadMiddlePhotoUrl(idList[k].id),
+                                totalQuantity    : products[z].totalQuantity,
+                                brand            : products[z].brand ,
+                                name             : products[z].name ,
+                                supplier	     : products[z].supplier,
+                                reviewRating     : products[z].reviewRating,
+                                subjectId        : products[z].subjectId,
+                                feedbacks        : products[z].feedbacks,
+                            })
+                            break
+                        }
+
+
+
+        } catch (e) { console.log(e);}
+        console.log(similarProducts.length+'sdsd');
+        return similarProducts
+    }
 
     async getProductStartInfo (id){
         let isInWB = false

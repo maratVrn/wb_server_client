@@ -1,7 +1,9 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
-const sequelize = require('./db')
+const UserStatService = require('./servise/userStat-service')
+
+const sequelize= require('./db')
 const cookieParser = require('cookie-parser')
 const router = require('./router/index')
 const cron = require("node-cron");       // Для выполнения задачи по расписанию
@@ -9,7 +11,6 @@ const errorMiddleware = require('./exceptions/error-middleware')
 
 
 const PORT = process.env.PORT ||  5003;
-// const PORT = 5002;
 const app = express()
 
 
@@ -41,17 +42,14 @@ const start = async () => {
     try {
         await sequelize.authenticate()
         await sequelize.sync()
-
+        await UserStatService.startDb()
 
         app.get('/test', (req, res) => {
             console.log('log_work');
             res.send(JSON.stringify(testData))
 
         })
-        //
-        // await sequelize.authenticate()
-        // await sequelize.sync()
-        //
+
 
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
 

@@ -1,7 +1,5 @@
 const ClientService = require('../servise/client-service')
 const ProductListService = require('../servise/productList-service')
-const WBService = require("../servise/wb-service");
-const WordStatisticService = require("../servise/wordStatistic-service")
 
 class ClientController {
 
@@ -37,6 +35,22 @@ class ClientController {
         }
 
     }
+
+
+    async getSimilarProducts(req, res, next) {
+
+        try {
+            const id = req.params.link
+            const result = await ClientService.getSimilarProducts(id)
+
+            res.json(result)
+
+        } catch (e) {
+            next(e)
+        }
+
+    }
+
     async getProductStartInfo(req, res, next) {
 
         try {
@@ -63,23 +77,7 @@ class ClientController {
         }
 
     }
-    async getPositionsInfo(req, res, next) {
 
-        try {
-            const id = req.body.id
-            let result = []
-            if (id) {
-                const searchArray  = req.body.searchArray
-                result =   await WBService.loadPositionsInfo(id, searchArray)
-
-            }
-            res.json(result)
-
-        } catch (e) {
-            next(e)
-        }
-
-    }
     async duplicateTest(req, res, next) {
         try {
 

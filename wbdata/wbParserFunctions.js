@@ -5,39 +5,8 @@ const ProxyAndErrors = require('./proxy_and_errors')//require('../wbdata/proxy_a
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 
-// Получаем бренд лист и категории товаров для выбранного каталога
-async function PARSER_GetBrandAndCategoriesList(currCatalog) {
-    let isResult = false
-    let needGetData = true
-
-    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-        try {
-            // Загрузим бренды
-            // const url = `https://catalog.wb.ru/catalog/${currCatalog.catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${currCatalog.catalogParam.query}&curr=rub&dest=-3390370&filters=ffbrand&spp=30`
-            // await axios.get(url, ProxyAndErrors.config).then(response => {
-            //     const resData = response.data
-            //     if (resData?.data?.filters[0]) {
-            //         currCatalog.brandList = resData?.data?.filters[0].items
-            //     }})
-            // Загрузим бренды
-            const url2 = `https://catalog.wb.ru/catalog/${currCatalog.catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${currCatalog.catalogParam.query}&curr=rub&dest=-3390370&filters=xsubject&spp=30`
-            await axios.get(url2, ProxyAndErrors.config).then(response => {
-                const resData = response.data
-                if (resData?.data?.filters[0]) {
-                    currCatalog.subjectList = resData?.data?.filters[0].items
-                    // console.log(currCatalog.subjectList);
-                }})
-            needGetData = false
-            isResult = true
-        } catch (err) {   needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetBrandAndCategoriesList', 'currCatalog '+currCatalog.toString())}
-    }
-    return isResult
-}
-
 // Получаем ИД сервара
 function PARSER_GetBasketFromID(shortId){
-
-
         let basket = ''
         if (shortId <= 143) { basket = '01'}
         else if (shortId <= 287)   basket = '02'
@@ -94,8 +63,6 @@ function PARSER_LoadMiddlePhotoUrl(id){
     return `https://basket-${basket}.wbbasket.ru/vol${shortId}/part${part}/${id}/images/c516x688/1.webp`
 }
 
-
-
 async function PARSER_GetIAbout(url) {
 
     let needGetData = true
@@ -126,18 +93,34 @@ async function PARSER_GetIAbout(url) {
     return aboutData
 }
 
+// НУЖНА
 async function PARSER_GetIdInfo(id) {
     // console.log('PARSER_GetIdInfo');
     let needGetData = true
     let infoData = null
     while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
         try {
-            const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+parseInt(id).toString()
-            const res =  await axios.get(url,  ProxyAndErrors.config).then(response => {
+        //     const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+parseInt(id).toString()
 
-                if (response.data.data.products[0])
+            // const url = `https://www.wildberries.ru/__internal/u-card/cards/v4/list?dest=-3390370&nm=`+parseInt(id).toString()
+            const url = `https://www.wildberries.ru/__internal/u-card/cards/v4/detail?dest=-1255987&lang=ru&nm=`+parseInt(id).toString()
+
+            // console.log(url);
+            // Реалистичный User-Agent для Chrome на Windows
+            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+            const myCookie = ProxyAndErrors.cookie
+            const browserHeaders = {
+                'User-Agent': userAgent,  'Cookie' : myCookie,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Connection': 'keep-alive',  'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
+            };
+
+            const res =  await axios.get(url, {headers: browserHeaders}).then(response => {
+                const products = response.data.products
+
+                if (products[0])
                 try {
-                    let resData = response.data.data.products[0]
+                    let resData = products[0]
 
                     let price = 0
                     let basicPrice = 0
@@ -154,12 +137,16 @@ async function PARSER_GetIdInfo(id) {
                                     price = resData.sizes[k]?.price?.product ? Math.round(parseInt(resData.sizes[k]?.price?.product) / 100) : -1
                                     basicPrice = resData.sizes[k]?.price?.basic ? Math.round(parseInt(resData.sizes[k]?.price?.basic) / 100) : -1
                                     if (basicPrice > 0) discount = Math.round(100 * (basicPrice - price) / basicPrice)
-                                    needCalcPrice = false
+
+                                    if (price>0) needCalcPrice = false
 
                                 }
-
+                                console.log(realTotalQuantity);
+                                console.log(resData.sizes[k].stocks);
                                 for (let z in resData.sizes[k].stocks)
-                                    try { realTotalQuantity += resData.sizes[k].stocks[z].qty }catch (e) {  }
+                                    try { realTotalQuantity += resData.sizes[k].stocks[z].qty
+                                        // console.log(realTotalQuantity);
+                                    }catch (e) {  }
 
 
                             }
@@ -192,6 +179,7 @@ async function PARSER_GetIdInfo(id) {
             needGetData = false
 
         } catch (err) {
+            console.log(err.message);
             needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetIdInfo', 'id '+id.toString())
 
         }
@@ -200,29 +188,79 @@ async function PARSER_GetIdInfo(id) {
     return infoData
 }
 
-async function PARSER_GetSupplierSubjects(supplierId) {
-    let supplierSubjectsList = []
+
+// НУЖНА ищем похожие товары по ИД товара
+async function PARSER_GetSimilarProducts(id) {
+    let similarProducts = []
     let needGetData = true
-        needGetData = true
-        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-            try {
 
-                const url2 =`https://catalog.wb.ru/sellers/v8/filters?ab_testing=false&appType=1&curr=rub&dest=12358291&filters=xsubject&spp=30&supplier=${supplierId}`
-                await axios.get(url2, ProxyAndErrors.config).then(response => {
-                    const resData = response.data
+    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+        try {
 
-                    try {if (resData.data.filters[0]) supplierSubjectsList = resData.data.filters[0].items} catch (e) {}
+            let url = `https://www.wildberries.ru/__internal/u-recom/recom/ru/common/v8/search?dest=-1255987&page=1&query=похожие ${id}&resultset=catalog`
 
-                })
-                needGetData = false
+            // Реалистичный User-Agent для Chrome на Windows
+            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+            const myCookie = ProxyAndErrors.cookie
+            const browserHeaders = {
+                'User-Agent': userAgent,  'Cookie' : myCookie,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Connection': 'keep-alive',  'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
+            };
+            url = encodeURI(url)
+            await axios.get(url, {headers: browserHeaders}).then(response => {
+                const products = response.data.products
+                if (products) {
 
-            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetSupplierSubjects', 'supplierId '+supplierId.toString())}
+                    for (let i in products){
+                        try {
+                            const currProduct = products[i]
+
+                            let needCalcPrice = true
+                            let price = -1
+                            for (let k in currProduct.sizes) {
+
+                                try {
+                                    if (needCalcPrice) {
+                                        price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product) / 100) : -1
+                                        if (price>0) needCalcPrice = false
+                                    }
+                                } catch (e) {console.log(e.message);}
+                            }
+
+                            const newProduct = {
+                                id: currProduct?.id ? currProduct.id : 0,
+                                price: price,
+                                totalQuantity: currProduct.totalQuantity ? currProduct.totalQuantity : 0,
+                                brand: currProduct?.brand ? currProduct?.brand : '',
+                                name: currProduct?.name ? currProduct?.name : '',
+                                supplier: currProduct?.supplier ? currProduct?.supplier : '',
+                                reviewRating: currProduct?.reviewRating ? currProduct?.reviewRating : 0,
+                                subjectId: currProduct?.subjectId ? currProduct?.subjectId : 0,
+                                feedbacks: currProduct?.feedbacks ? currProduct?.feedbacks : 0,
+                            }
+
+
+                            similarProducts.push(newProduct)
+
+                        } catch (e) {console.log(e); }
+                    }
+                }
+
+            })
+            needGetData = false
+        } catch (err) {
+            // console.log(err);
+            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetSimilarProducts', 'noData ')
         }
+    }
 
-    return supplierSubjectsList
+    return similarProducts
 }
 
 
+
+// НУЖНА
 async function PARSER_GetProductListPriceInfo(productIdList) {
     let productListInfo = []
     let needGetData = true
@@ -233,28 +271,44 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
     }
     while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
         try {
-            const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
-               await axios.get(url).then(response => {
-                const resData = response.data
-                if (resData.data) {
+            // const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
+            // const url = `https://www.wildberries.ru/__internal/u-card/cards/v4/list?dest=-3390370&nm=`+productListStr
+            const url = `https://www.wildberries.ru/__internal/u-card/cards/v4/detail?dest=-1255987&lang=ru&nm=`+productListStr
+            // Реалистичный User-Agent для Chrome на Windows
+            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+            const myCookie = ProxyAndErrors.cookie
+            const browserHeaders = {
+                'User-Agent': userAgent,  'Cookie' : myCookie,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Connection': 'keep-alive',  'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
+            };
 
-                    for (let i in resData.data.products){
-                        const currProduct = resData.data.products[i]
+
+            await axios.get(url, {headers: browserHeaders}).then(response => {
+                const products = response.data.products
+                if (products) {
+
+                    for (let i in products){
+                        const currProduct = products[i]
                         let realTotalQuantity = 0
                         let needCalcPrice = true
-
                             let price = -1
                             for (let k in currProduct.sizes) {
 
-                                if (needCalcPrice) {
-                                    price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product) / 100) : -1
-                                    needCalcPrice = false
-                                }
-                                for (let z in currProduct.sizes[k].stocks)
-                                    try { realTotalQuantity += currProduct.sizes[k].stocks[z].qty }catch (e) {  }
+                                try {
+                                    if (needCalcPrice) {
+                                        price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product) / 100) : -1
+                                        if (price>0) needCalcPrice = false
+                                    }
 
+                                    for (let z in currProduct.sizes[k].stocks)
+                                        try { realTotalQuantity += currProduct.sizes[k].stocks[z].qty
+                                        }catch (e) {  }
 
+                                } catch (e) { console.log(e.message);}
                             }
+                                //  использовать если сломается остатки по размерам
+                                //     realTotalQuantity = currProduct.totalQuantity? currProduct.totalQuantity : 0
                             const newProduct = {
                                 id               : currProduct?.id ? currProduct.id : 0,
                                 price            : price,
@@ -276,250 +330,11 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
             needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfo', 'noData ')
         }
     }
-    return productListInfo
-}
-
-
-
-// Берем актуальную информацию по товарам для отображения на клиенте (упрощенный вариант)
-async function PARSER_GetProductListInfo_LITE_ToClient(productIdList) {
-    let productListInfo = []
-    let needGetData = true
-    let productListStr = ''
-    for (let i in productIdList) {
-        if (i>0) productListStr += ';'
-        productListStr += parseInt(productIdList[i]).toString()
-    }
-    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-        try {
-            const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
-
-            await axios.get(url, ProxyAndErrors.config).then(response => {
-                const resData = response.data
-
-                if (resData.data) {
-                    // console.log('-----------ыы--------->   '+resData.data.products.length);
-                    for (let i in resData.data.products){
-                        const currProduct = resData.data.products[i]
-                        const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
-                        // Если остатков товара больше 0  то найдем цену
-                        let price = 0
-                        let basicPrice = 0
-
-                        if (totalQuantity > 0) {
-                            // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
-
-                            for (let k in currProduct.sizes) {
-                                if (currProduct.sizes[k]?.price) {
-                                    price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product) / 100) : -1
-                                    basicPrice = currProduct.sizes[k]?.price?.basic ? Math.round(parseInt(currProduct.sizes[k]?.price?.basic) / 100) : -1
-                                    if (basicPrice>0) discount = Math.round( 100 * (basicPrice - price)/basicPrice )
-                                    break
-                                }
-                            }
-                        }
-
-                        // Поиск цвета
-                        let color = ''
-                        for (let k in currProduct.colors) {
-                            if (currProduct.colors[k]?.name) {
-                                color = currProduct.colors[k]?.name
-                                break
-                            }
-                        }
-
-
-                        const newproduct = {
-                            id              : currProduct?.id ? currProduct.id : 0,
-                            basicPrice      : basicPrice,
-                            price           : price,
-                            totalQuantity   : totalQuantity,
-                            reviewRating    : currProduct.reviewRating	 ? currProduct.reviewRating : 0,
-                            feedbacks	    : currProduct.feedbacks ? currProduct.feedbacks : 0,
-                            name		    : currProduct.name	    ? currProduct.name		 : "",
-                            color           : color,
-                        }
-                        productListInfo.push(newproduct)
-
-                    }
-                }
-
-            })
-            needGetData = false
-        } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfo_LITE_ToClient', '')}
-    }
-
-
-
-
 
     return productListInfo
-}
-
-// Берем актуальную информацию по товарам для отображения на клиенте
-async function PARSER_GetProductListInfoToClient(productIdList) {
-    let productListInfo = []
-    let needGetData = true
-    let productListStr = ''
-    for (let i in productIdList) {
-        if (i>0) productListStr += ';'
-        productListStr += parseInt(productIdList[i].id).toString()
-    }
-    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-        try {
-            const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
-
-            await axios.get(url, ProxyAndErrors.config).then(response => {
-                const resData = response.data
-
-                if (resData.data) {
-                    console.log('-------------------->   '+resData.data.products.length);
-                    for (let i in resData.data.products){
-                        const currProduct = resData.data.products[i]
-                        const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
-                        // Если остатков товара больше 0  то найдем цену
-                        let price = -1
-                        let basicPrice = -1
-                        let wb_discount = 0
-                        let saleCount = 0
-                        if (totalQuantity > 0) {
-                            // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
-
-                            for (let k in currProduct.sizes) {
-                                if (currProduct.sizes[k]?.price) {
-                                    price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product) / 100) : -1
-                                    basicPrice = currProduct.sizes[k]?.price?.basic ? Math.round(parseInt(currProduct.sizes[k]?.price?.basic) / 100) : -1
-                                    if (basicPrice>0) wb_discount = Math.round( 100 * (basicPrice - price)/basicPrice )
-                                    break
-                                }
-                            }
-                        }
-                        // Далее сохраним необходимую инфомацию в обьекте
-                        let priceHistory_tmp = []
-
-                        for (let i in productIdList) {
-                            if (productIdList[i].id === currProduct?.id) {
-
-                                currProduct.discount = productIdList[i].discount
-                                priceHistory_tmp = productIdList[i].priceHistory
-                                // Если остатки нулевые возмем цену из товара
-                                if (totalQuantity ===0){
-                                    price =  productIdList[i].price
-                                    basicPrice = price
-                                    wb_discount = 0
-                                }
-
-                                break
-                            }
-                        }
-
-                        const newproduct = {
-                            id              : currProduct?.id ? currProduct.id : 0,
-                            basicPrice      : basicPrice,
-                            price           : price,
-                            totalQuantity   : totalQuantity,
-                            reviewRating    : currProduct.reviewRating	 ? currProduct.reviewRating : 0,
-                            discount        : currProduct.discount,
-                            wb_discount     : wb_discount,
-                            feedbacks	    : currProduct.feedbacks ? currProduct.feedbacks : 0,
-                            brand		    : currProduct.brand	    ? currProduct.brand	 : "",
-                            name		    : currProduct.name	    ? currProduct.name		 : "",
-                            photoUrl        : '',
-                            priceHistory    : priceHistory_tmp,
-
-                        }
-                        productListInfo.push(newproduct)
-
-                        }
-                    }
-
-             })
-            needGetData = false
-        } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfoToClient', '')}
-    }
-
-
-
-
-
-    return productListInfo
-}
-
-async function PARSER_GetProductPositionToClient(id, searchWord) {
-    // console.log(id);
-    // console.log(searchWord);
-
-    let position = 0
-    let isThere = false
-    let needGetData = true
-    let needGetNextProducts = true
-    let maxPage = 10
-    const need_id = parseInt(id)
-    let pageResult = 0
-    let total = 0
-
-    for (let i = 1; i <= maxPage; i++) {
-        let page = i
-        needGetData = true
-        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-            try {
-
-
-
-                let url = `https://search.wb.ru/exactmatch/ru/common/v9/search?ab_testing=false&appType=1&curr=rub&dest=12358291&lang=ru&page=${page}&query=`+
-                    searchWord+'&resultset=catalog&sort=popular&spp=30'
-                url = encodeURI(url)
-                // console.log(url);
-                await axios.get(url, ProxyAndErrors.config).then(response => {
-                    const resData = response.data
-                    total = resData?.data?.total;
-
-                    if (resData?.data?.products) {
-
-                        for (let k in resData?.data?.products) {
-                            try {
-                                if (parseInt(resData?.data?.products[k].id) === need_id) {
-                                    position += parseInt(k) + 1
-                                    // console.log('нашли ' + position+' i '+ i+' k '+k);
-                                    isThere = true
-                                    needGetNextProducts = false
-                                }
-
-                            } catch (e) {
-                            }
-                            try {
-                                if (resData?.data?.products.length < 100) needGetNextProducts = false
-                            } catch (e) {
-                                needGetNextProducts = false
-                            }
-                            if (isThere) {
-                                needGetNextProducts = false
-                                break
-                            }
-                        }
-                    }
-                })
-                needGetData = false
-
-            } catch (err) {needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductPositionToClient', 'id '+id.toString())}
-        }
-        pageResult = i
-        if (!needGetNextProducts) break
-        // break //TODO: отладка
-        position += 100
-    }
-
-
-
-
-
-    return {searchWord : searchWord, position: position, pageResult:pageResult, total:total}
 }
 
 
 module.exports = {
-    PARSER_GetBrandAndCategoriesList, PARSER_GetProductListInfo_LITE_ToClient,
-    PARSER_GetProductListInfoToClient,PARSER_GetIAbout,PARSER_GetIdInfo,
-    PARSER_GetProductPositionToClient,
-    PARSER_GetProductListPriceInfo, PARSER_GetBasketFromID, PARSER_LoadLittlePhotoUrl, PARSER_LoadMiddlePhotoUrl
+    PARSER_GetIAbout,PARSER_GetIdInfo,  PARSER_GetProductListPriceInfo, PARSER_GetSimilarProducts,  PARSER_LoadMiddlePhotoUrl
 }

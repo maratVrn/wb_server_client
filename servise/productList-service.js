@@ -132,60 +132,17 @@ class ProductListService {
         return result
     }
 
-
-    // удаляем товары которых больше нет на вб по ним saleCount равно null
-    async deleteZeroID() {
-
-        console.log('tut');
-        let allIdToDeleteCount = 0
-
-        const allTablesName = await sequelize.getQueryInterface().showAllTables()
-        if (allTablesName)
-            for (let i = 0; i < allTablesName.length; i ++)
-            {
-                const tableName = allTablesName[i]
-                if (tableName.toString().includes('productList') && !tableName.toString().includes('all'))  {
-
-                    this.WBCatalogProductList.tableName = tableName
-                    console.log(i+ '  ' + tableName);
-
-                    const data = await this.WBCatalogProductList.findAll({where:{saleCount:null}})
-
-
-                    if (data.length > 0) {
-
-
-                        allIdToDeleteCount+=data.length
-                        const IdList = []
-                        // let idListString = ''
-
-                        for (let j in data) {
-                            IdList.push(data[j].id)
-                            // idListString += data[j].id.toString()+' '
-                        }
-                        console.log('    ------------Удаляем   '+data.length);
-
-                        // await data.destroy()
-
-                        // saveErrorLog('deleteId', '    ---------------------------------------------         ')
-                        // saveErrorLog('deleteId', 'Список нерабочих ид в '+tableName+' всего '+ IdList.length)
-                        // saveErrorLog('deleteId', idListString)
-
-
-
-
-                    }
-
-
-                }
-                if (i > 5) break
-            }
-        saveErrorLog('deleteId','     ---------------------------------------------         ')
-        saveErrorLog('deleteId','Всег надо удалить '+ allIdToDeleteCount)
-
-
-
+    async getProductsInfoListByControlIdLis(controlIdList){
+        let idList = []
+        for (let key of controlIdList.keys()){
+            let crIdList = controlIdList.get(key)
+            const crRes = await this.getProductInfoList(crIdList, key)
+            idList = [...idList, ... crRes]
+        }
+        return idList
     }
+
+
 }
 
 module.exports = new ProductListService()

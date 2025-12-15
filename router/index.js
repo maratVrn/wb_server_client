@@ -22,11 +22,16 @@ router.post('/getProductList', clientController.getProductList)  // Получа
 router.get('/getProductStartInfo/:link', clientController.getProductStartInfo)  // Получаем список товаров в заданном каталоге
 router.get('/getProductInfo/:link', clientController.getProductInfo)            // Получаем список товаров в заданном каталоге
 router.get('/getSimilarProducts/:link', clientController.getSimilarProducts)    // Получаем список похожих товаров со скидками
+router.get('/userGoToWB', clientController.userGoToWB)                           // Переход пользователя на вб
 
 
 // Функции по работе со стартовыми товарами
 router.post('/loadStartProducts', wbController.loadStartProducts)
 router.post('/addStartProduct', wbController.addStartProduct)
+
+// Функции по работе со статистикой юзверей
+router.post('/loadAllUserStat', wbController.loadAllUserStat)
+
 
 
 // router.post('/registration',

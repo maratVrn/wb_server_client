@@ -2,23 +2,18 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const UserStatService = require('./servise/userStat-service')
-
 const sequelize= require('./db')
 const cookieParser = require('cookie-parser')
 const router = require('./router/index')
 const cron = require("node-cron");       // Для выполнения задачи по расписанию
 const errorMiddleware = require('./exceptions/error-middleware')
-
-
 const PORT = process.env.PORT ||  5003;
 const app = express()
+// Сохраняем статистику посещений раз в 10 минут
+cron.schedule("*/10 * * * *", function() {
+    UserStatService.saveCurrStatData().then()
+});
 
-
-
-// Запускаем функцию перерасчета портфелей
-// cron.schedule("0 9 * * 2-6", function() {
-//     updateProfitData()
-// });
 
 app.use(express.json({limit: '10mb'}));
 // app.use(cookieParser());
@@ -43,13 +38,6 @@ const start = async () => {
         await sequelize.authenticate()
         await sequelize.sync()
         await UserStatService.startDb()
-
-        app.get('/test', (req, res) => {
-            console.log('log_work');
-            res.send(JSON.stringify(testData))
-
-        })
-
 
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
 

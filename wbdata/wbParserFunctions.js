@@ -141,8 +141,6 @@ async function PARSER_GetIdInfo(id) {
                                     if (price>0) needCalcPrice = false
 
                                 }
-                                console.log(realTotalQuantity);
-                                console.log(resData.sizes[k].stocks);
                                 for (let z in resData.sizes[k].stocks)
                                     try { realTotalQuantity += resData.sizes[k].stocks[z].qty
                                         // console.log(realTotalQuantity);

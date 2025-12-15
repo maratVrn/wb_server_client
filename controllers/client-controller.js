@@ -1,5 +1,6 @@
 const ClientService = require('../servise/client-service')
 const ProductListService = require('../servise/productList-service')
+const UserStatService = require("../servise/userStat-service");
 
 class ClientController {
 
@@ -15,6 +16,9 @@ class ClientController {
                 param   :   req.body.param? req.body.param : {},
             }
 
+            const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            UserStatService.addIpInfo(ip, 'search').then()
+
             const result =  await ClientService.getSearchResult(searchParam)
             res.json(result)
 
@@ -26,9 +30,11 @@ class ClientController {
     async getProductList(req, res, next) {
 
         try {
+            const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            UserStatService.addIpInfo(ip, 'productList').then()
 
             let  param = req.body? req.body : {}
-               const result = await ClientService.getProductList(param)
+            const result = await ClientService.getProductList(param)
             res.json(result)
         } catch (e) {
             next(e)
@@ -51,9 +57,26 @@ class ClientController {
 
     }
 
+
+    async userGoToWB(req, res, next) {
+        try {
+            const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            UserStatService.addIpInfo(ip, 'wbTransit').then()
+            res.json('isOk')
+        } catch (e) {
+            next(e)
+        }
+
+    }
+
     async getProductStartInfo(req, res, next) {
 
         try {
+            console.log('getProductStartInfo');
+            const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            UserStatService.addIpInfo(ip, 'viewProduct').then()
+
+
             const id = req.params.link
             const result = await ClientService.getProductStartInfo(id)
 

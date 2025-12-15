@@ -10,8 +10,7 @@ class WbController{
 
         try {
             const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-            console.log('getLiteWBCatalog');
-            UserStatService.addIpInfo(ip).then()
+            UserStatService.addIpInfo(ip, 'startEntry').then()
             // console.log(req);
             const allWBCatalog  = await wbService.getLiteWBCatalog()
             res.json(allWBCatalog)
@@ -47,6 +46,20 @@ class WbController{
             next(e)
         }
     }
+
+    async loadAllUserStat (req, res, next) {
+        try {
+            const needDelete    = req.body.needDelete? req.body.needDelete : false
+            const deleteIdList = req.body.deleteIdList? req.body.deleteIdList : []
+            const  result  = await UserStatService.loadStartProducts(needDelete, deleteIdList)
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+    }
+
+
     async addStartProduct (req, res, next) {
         try {
             const id = req.body.id? req.body.id : 0

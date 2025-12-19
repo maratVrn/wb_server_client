@@ -34,13 +34,14 @@ router.post('/loadAllUserStat', wbController.loadAllUserStat)
 
 
 
-// router.post('/registration',
-//     // Валидируем емайл и пароль
-//     body('email').isEmail(),
-//     body('password').isLength({min:5, max:20}),
-//     userController.registration)
-
 // users routers
+router.post('/registration',clientController.registration)
+router.post('/login', clientController.login)
+router.post('/tokenTest', clientController.tokenTest)
+
+
+
+
 // router.post('/login', userController.login)
 // router.post('/saveUser', userController.saveUser)
 // router.post('/sendemailconfirm', userController.sendEmailConfirm)

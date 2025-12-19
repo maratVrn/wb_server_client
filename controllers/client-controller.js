@@ -1,6 +1,7 @@
 const ClientService = require('../servise/client-service')
 const ProductListService = require('../servise/productList-service')
 const UserStatService = require("../servise/userStat-service");
+const UserService = require("../servise/user-service");
 
 class ClientController {
 
@@ -19,7 +20,7 @@ class ClientController {
             const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             UserStatService.addIpInfo(ip, 'search').then()
 
-            const result =  await ClientService.getSearchResult(searchParam)
+            const result =  await ClientService.getSearchResult2(searchParam)
             res.json(result)
 
         } catch (e) {
@@ -132,6 +133,38 @@ class ClientController {
 
         } catch (e) {  next(e)  }
     }
+
+
+    async registration(req, res, next) {
+        try {
+            const formData = req.body.formData
+            const result = await UserService.registration(formData)
+            res.json(result)
+        } catch (e) {
+            next(e)
+        }
+    }
+
+    async login(req, res, next) {
+        try {
+            const formData = req.body.formData
+            const result = await UserService.login(formData)
+            res.json(result)
+        } catch (e) {
+            next(e)
+        }
+    }
+    async tokenTest(req, res, next) {
+        try {
+            const token = req.body.token
+            const result = await UserService.tokenTest(token)
+            res.json(result)
+        } catch (e) {
+            next(e)
+        }
+    }
+
+
 
 
 

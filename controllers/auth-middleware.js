@@ -1,5 +1,5 @@
 const ApiError = require('../exceptions/api-error')
-const tokenService = require('../servise/token-service')
+
 // Проверяем валидность токена пользователя
 module.exports =function (req, res, next){
      try{

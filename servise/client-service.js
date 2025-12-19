@@ -1,5 +1,5 @@
 
-const { PARSER_GetIdInfo, PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl, PARSER_GetSimilarProducts} = require("../wbdata/wbParserFunctions")
+const { PARSER_GetIdInfo, PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl, PARSER_GetSimilarProducts, PARSER_GetSearchProductsID} = require("../wbdata/wbParserFunctions")
 const ProductListService = require('../servise/productList-service')
 const ProductIdService = require('../servise/productId-service')
 const MySearch = require('../wbdata/search')
@@ -10,6 +10,89 @@ class ClientService {
 
 
 
+    // Вариант поиска с использованием ВБ - сначала ищем то что выдает ВБ 2-3 товара, потом ищем похожиу товары и среди них уже со скидкой
+
+    async getSearchResult2 (searchParam){
+
+
+        let result = []
+        const viewIdProducts = await PARSER_GetSearchProductsID(searchParam.searchQuery)
+
+        let idList = []
+        if (viewIdProducts.length>0)
+            for (let i in viewIdProducts){
+
+                let crSimilarProducts = await this.getSimilarProducts(viewIdProducts[i])
+                for (let k in crSimilarProducts)
+                    if (crSimilarProducts[k].discount > 5)
+                        if (!idList.includes(crSimilarProducts[k].id)){
+                            result.push(crSimilarProducts[k])
+                            idList.push(crSimilarProducts[k].id)
+                        }
+                if ((parseInt(i) > 2) && (result.length>50)) break
+                if (parseInt(i) > 7) break
+
+            }
+
+        // Если товаров маловато то попробуем поискать по найденным
+        if  (result.length<80){
+            result.sort((a, b) => b.discount - a.discount)
+
+            for (let i in result){
+                let crSimilarProducts = await this.getSimilarProducts(result[i].id)
+                for (let k in crSimilarProducts)
+                    if (crSimilarProducts[k].discount > 5)
+                        if (!idList.includes(crSimilarProducts[k].id)){
+                            result.push(crSimilarProducts[k])
+                            idList.push(crSimilarProducts[k].id)
+                        }
+                if (parseInt(i) > 1) break
+            }
+        }
+
+        // console.log('закончили');
+        // console.log(result.length);
+        //  ------------------------------------------------
+        // const searchData = MySearch.getSearchParam(searchParam.searchQuery)
+        // // console.log(searchData);
+        // let param = {catalogIdList : searchData.catalogIdList, idCount: searchParam.param.idCount,
+        //     filters : searchParam.param.filters
+        // }
+        // if (!param.filters.isXsubjectFilterChecked){
+        //     param.filters.isXsubjectFilterChecked = true
+        //     param.filters.xSubjectIdArray = searchData.subjectIdList
+        // }
+        // const [result, noFilters] = await this.getProductList(param)
+        //
+        // // TODO: пока очень криво сделал поиск имен предметов переделать по нормальному - братьиз отдельной таблицы
+        //
+        // let filters = {subjects:[]}
+        // for (let j in searchData.subjectIdList)
+        //     filters.subjects.push({id:searchData.subjectIdList[j], needAdd : true, name : ''})
+        //
+        // for (let i in searchData.catalogIdList) {
+        //     const catalogId = searchData.catalogIdList[i] ? searchData.catalogIdList[i] : 0
+        //     const oneC = await WBAllSubjects.findOne({where: {catalogId: catalogId}})
+        //     if (oneC) if (oneC.subjects)
+        //         for (let k in oneC.subjects)
+        //             for (let j in filters.subjects)
+        //                 if (filters.subjects[j].needAdd)
+        //                 if (oneC.subjects[k].id === filters.subjects[j].id){
+        //                     filters.subjects[j].name = oneC.subjects[k].name
+        //                     filters.subjects[j].needAdd = false
+        //                     break
+        //                 }
+        // }
+
+        // return  [result, filters]
+
+        return  [result, {}]
+        // return 'isOk'
+    }
+
+
+    // Вариант поиска товаров по поисковому запросу - ище в нашей базе данных, берем список каталог ИД и товаров по базе запросов и формируем списки
+    // Работает очень криво по сути выдает предметы в общем смысле без учета специфики запросов
     async getSearchResult (searchParam){
 
 
@@ -37,18 +120,15 @@ class ClientService {
                 for (let k in oneC.subjects)
                     for (let j in filters.subjects)
                         if (filters.subjects[j].needAdd)
-                        if (oneC.subjects[k].id === filters.subjects[j].id){
-                            filters.subjects[j].name = oneC.subjects[k].name
-                            filters.subjects[j].needAdd = false
-                            break
-                        }
+                            if (oneC.subjects[k].id === filters.subjects[j].id){
+                                filters.subjects[j].name = oneC.subjects[k].name
+                                filters.subjects[j].needAdd = false
+                                break
+                            }
         }
 
         return  [result, filters]
     }
-
-
-
 
 
 
@@ -161,10 +241,7 @@ class ClientService {
                             break
                         }
 
-
-
         } catch (e) { console.log(e);}
-        console.log(similarProducts.length+'sdsd');
         return similarProducts
     }
 

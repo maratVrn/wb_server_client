@@ -1,10 +1,9 @@
 const {DataTypes} = require("sequelize");
-const fs = require('fs');
 const {Sequelize} = require('sequelize')
-const {PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions");
-
 
 class UserStatService{
+
+
     wbUsers = new Sequelize('wb_users', 'postgres', 'admin', {
         host: 'localhost',
         dialect: 'postgres',
@@ -14,6 +13,17 @@ class UserStatService{
     maxActionCount = 100  // Максимальное кол-во действий разрешенное для IP
 
     statInfo = {Date, crDate : '', statIPInfo : []}
+
+    users = this.wbUsers.define('users',{
+            id              :   {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+            name            :   {type: DataTypes.STRING},
+            email           :   {type: DataTypes.STRING},
+            password        :   {type: DataTypes.STRING},
+            token           :   {type: DataTypes.STRING},
+            role            :   {type: DataTypes.STRING},
+            userParam       :   {type: DataTypes.JSON},
+        },
+        { createdAt: false,   updatedAt: false  }  )
 
     statInfoDB = this.wbUsers.define('statInfo',{
             id              :   {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
@@ -60,10 +70,7 @@ class UserStatService{
         let dateStr = now.toLocaleDateString()
         if (this.statInfo.crDate !== dateStr){
             this.statInfo = await this.statInfoDB.create({Date : now, crDate : dateStr, statIPInfo : []})
-            console.log(this.statInfo);
         }
-
-
 
     }
     // Добавляем в статистику данные о действиях IP ка за сегодня а также проверяем кол-во совершенных действий если более то ставим запрает на получение данных

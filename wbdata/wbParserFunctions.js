@@ -190,38 +190,47 @@ async function PARSER_GetIdInfo(id) {
 // НУЖНА ищем товары по стандартной поисковой выдаче вб (для нашего поиска)
 async function PARSER_GetSearchProductsID(query) {
     let searchProductsID = []
-    let needGetData = true
+    const maxPage = 2
+    for (let i = 1; i <= maxPage; i++) {
+        let page = i
 
-    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-        try {
 
-            let url = `https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search?dest=-1255987&page=1&query=${query}&resultset=catalog&sort=popular`
-            // Реалистичный User-Agent для Chrome на Windows
-            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-            const myCookie = ProxyAndErrors.cookie
-            const browserHeaders = {
-                'User-Agent': userAgent,  'Cookie' : myCookie,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Connection': 'keep-alive',  'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
-            };
-            url = encodeURI(url)
-            await axios.get(url, {headers: browserHeaders}).then(response => {
-                const products = response.data.products
-                if (products) {
-                    for (let i in products){
-                        try {
-                            searchProductsID.push(products[i].id)
-                        } catch (e) {console.log(e); }
+        let needGetData = true
+        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+            try {
+
+                let url = `https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search?dest=-1255987&page=${page}&query=${query}&resultset=catalog&sort=popular`
+                // Реалистичный User-Agent для Chrome на Windows
+                const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+                const myCookie = ProxyAndErrors.cookie
+                const browserHeaders = {
+                    'User-Agent': userAgent,
+                    'Cookie': myCookie,
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
+                };
+                url = encodeURI(url)
+                await axios.get(url, {headers: browserHeaders}).then(response => {
+                    const products = response.data.products
+                    if (products) {
+                        for (let i in products) {
+                            try {
+                                searchProductsID.push(products[i].id)
+                            } catch (e) {
+                                console.log(e);
+                            }
+                        }
                     }
-                }
-            })
-            needGetData = false
-        } catch (err) {
-            // console.log(err);
-            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetSearchProducts', 'noData ')
+                })
+                needGetData = false
+            } catch (err) {
+
+                needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetSearchProducts', 'noData ')
+            }
         }
     }
-
     return searchProductsID
 }
 

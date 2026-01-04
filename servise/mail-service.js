@@ -12,18 +12,19 @@ class MailService {
             }
 
         })
+
     }
 
-    async sendActivationMail(to, link){
+    async sendUpdatePasswordMail(to, link){
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
-            subject:'Активация аккаунта на сайте ' + process.env.API_URL,
+            subject:'Изменение пароля на сайту wb.sale',
             text:'',
             html:
             `
                 <div>
-                    <h1>Для активации аккаунта перейдите по ссылке</h1>
+                    <h1>Для изменения пароля перейдите по ссылке</h1>
                     <a href="${link}">${link}</a>
                 
                 </div>

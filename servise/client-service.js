@@ -18,6 +18,38 @@ class ClientService {
         let result = []
         const viewIdProducts = await PARSER_GetSearchProductsID(searchParam.searchQuery)
 
+        // Сначала проанализируем товары с первой страницы выдачи
+        const controlIdList = await ProductIdService.getControlIdListByList(viewIdProducts)
+        // console.log(controlIdList);
+        let viewProducts = await ProductListService.getProductsInfoListByControlIdLis(controlIdList)
+        const updateProductListInfo = await PARSER_GetProductListPriceInfo(viewIdProducts)
+
+        for (let z in updateProductListInfo)
+            for (let k in viewProducts)
+                if (updateProductListInfo[z].id === viewProducts[k].id)
+                    if ((updateProductListInfo[z].totalQuantity>0) && (updateProductListInfo[z].price>0) && (viewProducts[k].discount > 5)) {
+                        const dt = new Date().toLocaleDateString()
+                        const nowPrice =  {d: dt, sp: updateProductListInfo[z].price, q : updateProductListInfo[z].totalQuantity}
+                        if (viewProducts[k].priceHistory.length>0)
+                            if (viewProducts[k].priceHistory.at(-1).d === dt) viewProducts[k].priceHistory.pop()
+                        viewProducts[k].priceHistory.push(nowPrice)
+                        result.push({
+                            id               : viewProducts[k].id,
+                            discount         : viewProducts[k].discount,
+                            priceHistory     : viewProducts[k].priceHistory,
+                            price            : updateProductListInfo[z].price,
+                            photoUrl         : PARSER_LoadMiddlePhotoUrl(viewProducts[k].id),
+                            totalQuantity    : updateProductListInfo[z].totalQuantity,
+                            brand            : updateProductListInfo[z].brand ,
+                            name             : updateProductListInfo[z].name ,
+                            supplier	     : updateProductListInfo[z].supplier,
+                            reviewRating     : updateProductListInfo[z].reviewRating,
+                            subjectId        : updateProductListInfo[z].subjectId,
+                            feedbacks        : updateProductListInfo[z].feedbacks,
+                        })
+                        break
+                    }
+
         let idList = []
         if (viewIdProducts.length>0)
             for (let i in viewIdProducts){
@@ -29,65 +61,30 @@ class ClientService {
                             result.push(crSimilarProducts[k])
                             idList.push(crSimilarProducts[k].id)
                         }
-                if ((parseInt(i) > 2) && (result.length>50)) break
-                if (parseInt(i) > 7) break
+                if ((parseInt(i) > 2) && (result.length>100)) break
+                if (parseInt(i) > 5) break
 
             }
 
-        // Если товаров маловато то попробуем поискать по найденным
-        if  (result.length<80){
-            result.sort((a, b) => b.discount - a.discount)
-
-            for (let i in result){
-                let crSimilarProducts = await this.getSimilarProducts(result[i].id)
-                for (let k in crSimilarProducts)
-                    if (crSimilarProducts[k].discount > 5)
-                        if (!idList.includes(crSimilarProducts[k].id)){
-                            result.push(crSimilarProducts[k])
-                            idList.push(crSimilarProducts[k].id)
-                        }
-                if (parseInt(i) > 1) break
-            }
-        }
-
-        // console.log('закончили');
-        // console.log(result.length);
-        //  ------------------------------------------------
-        // const searchData = MySearch.getSearchParam(searchParam.searchQuery)
-        // // console.log(searchData);
-        // let param = {catalogIdList : searchData.catalogIdList, idCount: searchParam.param.idCount,
-        //     filters : searchParam.param.filters
-        // }
-        // if (!param.filters.isXsubjectFilterChecked){
-        //     param.filters.isXsubjectFilterChecked = true
-        //     param.filters.xSubjectIdArray = searchData.subjectIdList
-        // }
-        // const [result, noFilters] = await this.getProductList(param)
+        // // Если товаров маловато то попробуем поискать по найденным
+        // if  (result.length<80){
+        //     result.sort((a, b) => b.discount - a.discount)
         //
-        // // TODO: пока очень криво сделал поиск имен предметов переделать по нормальному - братьиз отдельной таблицы
-        //
-        // let filters = {subjects:[]}
-        // for (let j in searchData.subjectIdList)
-        //     filters.subjects.push({id:searchData.subjectIdList[j], needAdd : true, name : ''})
-        //
-        // for (let i in searchData.catalogIdList) {
-        //     const catalogId = searchData.catalogIdList[i] ? searchData.catalogIdList[i] : 0
-        //     const oneC = await WBAllSubjects.findOne({where: {catalogId: catalogId}})
-        //     if (oneC) if (oneC.subjects)
-        //         for (let k in oneC.subjects)
-        //             for (let j in filters.subjects)
-        //                 if (filters.subjects[j].needAdd)
-        //                 if (oneC.subjects[k].id === filters.subjects[j].id){
-        //                     filters.subjects[j].name = oneC.subjects[k].name
-        //                     filters.subjects[j].needAdd = false
-        //                     break
+        //     for (let i in result){
+        //         let crSimilarProducts = await this.getSimilarProducts(result[i].id)
+        //         for (let k in crSimilarProducts)
+        //             if (crSimilarProducts[k].discount > 5)
+        //                 if (!idList.includes(crSimilarProducts[k].id)){
+        //                     result.push(crSimilarProducts[k])
+        //                     idList.push(crSimilarProducts[k].id)
         //                 }
+        //         if (parseInt(i) > 1) break
+        //     }
         // }
 
-        // return  [result, filters]
 
         return  [result, {}]
-        // return 'isOk'
+
     }
 
 
@@ -213,6 +210,16 @@ class ClientService {
             const products = await PARSER_GetSimilarProducts(id)
             let onlyIdList = []
             for (let i in products) onlyIdList.push(products[i].id)
+
+            // Получим правильные остатки
+            const updateProductListInfo = await PARSER_GetProductListPriceInfo(onlyIdList)
+            for (let i in updateProductListInfo)
+                for (let k in products) if (products[k].id === updateProductListInfo[i].id){
+                    products[k].totalQuantity = updateProductListInfo[i].totalQuantity
+                    break
+                }
+
+
             const controlIdList = await ProductIdService.getControlIdListByList(onlyIdList)
             let idList = await ProductListService.getProductsInfoListByControlIdLis(controlIdList)
             for (let z in products)

@@ -16,7 +16,7 @@ async function saveProductLIstInfoToCVS(productList,productListInfo ){
         filteredNumbers = filteredNumbers.filter((id) => id !== parseInt(productListInfo[i].id));
         const addLine = productListInfo[i].id+'\t'+productListInfo[i].subjectId+'\t'+ productListInfo[i].totalQuantity+`\n`
 
-        if (parseInt(productListInfo[i].totalQuantity)>process.env.MIN_TOTAL_QUANTITY) jsonData += addLine // Если кол-во больше нуля то это живая карточка товара
+        if (parseInt(productListInfo[i].totalQuantity)>3) jsonData += addLine // Если кол-во больше нуля то это живая карточка товара
             else jsonDataNull += addLine // Если меньше то неактивная
 
     }

@@ -4,6 +4,7 @@ const uuid  = require( 'uuid');
 const bcrypt = require('bcrypt')
 const jwt = require("jsonwebtoken");
 const UserStatService = require("../servise/userStat-service");
+const {PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions");
 
 const generateAccessToken = ( userName, email) => {
     const payLoad = {
@@ -43,6 +44,33 @@ class UserService {
         return result
 
     }
+
+    async updatePassword(email) {
+        const user = await  UserStatService.users.findOne( {where: {email:email}} )
+        if (!user)  return this.setErrorResult(`Пользователь с емайл ${email} не найден `)
+        const activationLink = uuid.v4()
+        user.apl = activationLink
+        await user.save()
+        console.log(activationLink);
+
+           // Отправляем на почту ссылку для активации
+
+        try {
+            await mailService.sendUpdatePasswordMail(email, `${process.env.CLIENT_URL}/updatePassword/${activationLink}`)
+        } catch (e) {
+            // console.log(e);
+            console.log(e.message);
+            // throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
+
+        }
+
+        return  {
+            isError : false,
+            errorMessage : 'На вашу почту отправлено письмо с сылкой для обновления пароля',
+        }
+    }
+
+
     async login(formData) {
         const user = await  UserStatService.users.findOne( {where: {email:formData.email}} )
         if (!user)  return this.setErrorResult(`Пользователь с емайл ${formData.email} не найден `)
@@ -79,118 +107,91 @@ class UserService {
 
         let crRole = "USER"
         if (formData.email === 'begisgevmr@mail.ru')  crRole = "ADMIN"
-        const user = await UserStatService.users.create({email : formData.email, password : hashPassword, role: crRole, token: token, userParam : {} , name : formData.username})
+        const user = await UserStatService.users.create({email : formData.email, password : hashPassword, role: crRole, token: token, userParam : {} , name : formData.username, apl : ''})
 
-        // const decodedData = jwt.verify(token, process.env.ACCESS_SECRET_KEY)
-        // console.log(decodedData);
-
-        // // Создаем ссылку для активации емайл
-        // const activationLink = uuid.v4()
-        // // console.log(user)
-        // // Генерируем jwt токен
-        //
-        // // Отправляем на почту ссылку для активации
-        //
-        // try {
-        //     await mailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${activationLink}`)
-        // } catch (e) {
-        //     console.log(e);
-        //     console.log(e.message);
-        //     throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
-        //
-        // }
-        //
-        //
-        // console.log('Users.create');
-        // // Создаем пользователя в базе данных
-        // let crRole = "USER"
-        // if (email === 'begisgevmr@mail.ru')  crRole = "ADMIN"
-        // const user = await Users.create({email, password : hashPassword, role: crRole, activationLink})
-        // console.log('Получили user '+user);
-        //
-        //
-        // // Создаем ДТО для шифрования (получаем payload) инфо в токене
-        // const userDto = new UserDto(user)
-        // // Генерируем токены и сохраняем рефреш в БД
-        // const tokens = tokenService.generateTokens({...userDto})
-        // await  tokenService.saveToken(userDto.id, tokens.refreshToken)
-        // // return{...tokens, user: userDto}
         return  this.setUserResult(user, token)
     }
 
-    // async sendEmailConfirm (email) {
-    //     const candidate = await  Users.findOne( {where: {email:email}} )
-    //     if (candidate){
-    //         try {
-    //             await mailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${candidate.activationLink}`)
-    //             return{user: candidate}
-    //         } catch (e) {
-    //             throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
-    //         }
-    //
-    //     }  else { throw ApiError.BadRequest(`Пользователь с емайл ${email} не найден`)}
-    // }
+    async newPassword(password, link) {
+        const user = await  UserStatService.users.findOne( {where: {apl:link}} )
+        if (!user) return  this.setErrorResult( `Ошибка обновления пароля: неверная ссылка регистрации`)
+        user.password = await bcrypt.hash(password,3)
+        const token = generateAccessToken(user.name, user.email)
+        await user.save()
+        return  this.setUserResult(user, token)
+    }
 
-    // async saveUser(user){
-    //
-    //     let  updateUser = await Users.findOne({where: {id:user.id}})
-    //     if (!updateUser){
-    //         throw ApiError.BadRequest('Пользователь не найден')
-    //     }
-    //     updateUser.name = user.name
-    //     updateUser.phone = user.phone
-    //     updateUser.email = user.email
-    //     updateUser.role = user.role
-    //     updateUser.isActivated = user.isActivated
-    //     updateUser.about = user.about
-    //
-    //     await updateUser.save()
-    //
-    // }
-    //
-    //
-    // async activate(activationLink){
-    //
-    //     const user = await Users.findOne({where: {activationLink:activationLink}})
-    //     if (!user){
-    //         throw ApiError.BadRequest('Неккоректная ссылка активации')
-    //     }
-    //     user.isActivated = true
-    //
-    //     await user.save()
-    //
-    // }
-    //
-    //
-    // async refresh(refreshToken){
-    //     if (!refreshToken){
-    //         throw ApiError.UnauthorizedError()
-    //     }
-    //     const userData = tokenService.validateRefreshToken(refreshToken)
-    //     const tokenDataDb = await tokenService.findToken(refreshToken)
-    //
-    //     if (!userData || !tokenDataDb){
-    //         throw ApiError.UnauthorizedError()
-    //     }
-    //
-    //     const user = await Users.findOne({where:{id:userData.id}})
-    //
-    //     const userDto = new UserDto(user)
-    //     // Генерируем токены и сохраняем рефреш в БД
-    //     const tokens = tokenService.generateTokens({...userDto})
-    //     await  tokenService.saveToken(userDto.id, tokens.refreshToken)
-    //     // return{...tokens, user: userDto}
-    //     return{...tokens, user: user}
-    //
-    // }
-    //
-    // async logout(refreshToken){
-    //
-    //     const token  = await tokenService.removeToken(refreshToken)
-    //     return token
-    //
-    // }
+    async addTrackProduct (addProductInfo = {}, userId = 0) {
+        const user = await  UserStatService.users.findOne( {where: {id:userId}} )
+        if (!user) return  this.setErrorResult( `Пользователь не найдет`)
+        if (!user.userParam.trackProducts) user.userParam.trackProducts = []
+        let needAdd = true
+        for (let i in user.userParam.trackProducts)
+            if (user.userParam.trackProducts[i].id === addProductInfo.id){
+                needAdd = false
+                // TODO:
+                console.log('Уже есть такой товар придумать механизм обновления');
+                break
+            }
+        if (needAdd) {
+            user.userParam.trackProducts.push(addProductInfo)
+            await UserStatService.users.update({userParam: user.userParam, needUpdateProducts : true}, {where: {id: userId,},})
+        }
+        return  { sError : false, errorMessage : ''}
+    }
 
+    async getAllTrackProducts ( userId, needDelete = false, deleteIdList =[]) {
+        const user = await  UserStatService.users.findOne( {where: {id:userId}} )
+        if (!user) return  this.setErrorResult( `Пользователь не найдет`)
+        if (!user.userParam.trackProducts) user.userParam.trackProducts = []
+        if (needDelete){
+            const newTrackProducts = user.userParam.trackProducts.filter(product => !deleteIdList.includes(product.id));
+            user.userParam.trackProducts = newTrackProducts
+            let needUpdateProducts =  newTrackProducts.length>0
+            await UserStatService.users.update({userParam: user.userParam, needUpdateProducts :needUpdateProducts }, {where: {id: userId,},})
+        }
+        return  user.userParam.trackProducts
+    }
+
+
+
+
+    async saveTrackProduct(userId, trackProduct) {
+        const user = await  UserStatService.users.findOne( {where: {id:userId}} )
+        if (!user) return  this.setErrorResult( `Пользователь не найдет`)
+        if (!user.userParam.trackProducts) user.userParam.trackProducts = []
+        if (trackProduct.id){
+            for (let i in user.userParam.trackProducts)
+                if (trackProduct.id === user.userParam.trackProducts[i].id){
+
+                    user.userParam.trackProducts[i] = trackProduct
+                    break
+                }
+            await UserStatService.users.update({userParam: user.userParam,}, {where: {id: userId,},})
+        }
+        return  user.userParam.trackProducts
+    }
+
+
+    // Функция обновления данных для отслеживаемых продуктов
+    async updateAllTrackProducts ( ) {
+        const users = await  UserStatService.users.findAll( {where: {needUpdateProducts:true}} )
+        for (let i in users)
+            if (users[i].userParam.trackProducts)
+                if (users[i].userParam.trackProducts.length>0){
+                    const updateTrackProducts = await this.updateCurTrackProducts(users[i].userParam.trackProducts)
+                    users[i].userParam.trackProducts = updateTrackProducts
+                    console.log(updateTrackProducts);
+                    // await UserStatService.users.update({userParam: users[i].userParam,}, {where: {id: users[i].id}})
+                }
+        return  'isOk'
+    }
+    async updateCurTrackProducts ( trackProducts) {
+        let updateTrackProducts = trackProducts
+
+
+        return updateTrackProducts
+    }
 
 
     // async getAllUsers (){

@@ -7,7 +7,8 @@ class ProxyAndErrors {
     config = {}
     proxyId = -1
 
-    cookie = '_wbauid=10698614871735392404; _ga_TXRZMJQDFE=GS2.1.s1759049348$o7$g0$t1759049348$j60$l0$h0; _ga=GA1.1.1812723687.1758564601; x_wbaas_token=1.1000.925a66281494421d8867e604ec9369e0.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NDsgcnY6MTQ1LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMTQ1LjB8MTc2NjMwNjIyN3xyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NjU3MDE0Mjd8MQ==.MEUCIQCST72Pi+/cTSbCd4cqaIKsYn18mVhmc8aTJgQx88KpJQIgATeVLNur0gODFRc6CMovVQ9woIiei+/sagDUOM+W9ys='
+    cookie = '_ga_TXRZMJQDFE=GS2.1.s1759049348$o7$g0$t1759049348$j60$l0$h0; _ga=GA1.1.1812723687.1758564601; external-locale=ru; _wbauid=5008695551766416174; cfidsw-wb=H8jlcc8qq+Mvh980e0CGWuvVX0rONlM/EmSOleVZwKceNdP3NqBgSZNpnhTgMGNcOgCw3DC11y6pqnuC7zm2lgWKLPUPjRl1Y2pvNJxrZvlaHYFfBkehb8qcNMmLDcSezU60LnF4c7RPSeZzx8GuJzYHetcKezZLziEgyUIa; __zzatw-wb=MDA0dC0yYBwREFsKEH49WgsbSl1pCENQGC9LXz1uLWEPJ3wjYnwgGWsvC1RDMmUIPkBNOTM5NGZwVydgTl8mRFVSCSUdFHhsH0FLVCNyM3dlaXceViUTFmcPRyJ1F0hAGxI6aCU6f1JpGWUzDldjGAsmVDVfP3wnHhl7dChQcX9NfXY3PmJ+MQ9pOSRjCh9+OFoLDWk3XBQ8dWU+SHN6KjtqJV9LXCBDUT9FbllGaXUVF0M8HHsNKkNtLToZUXYQQlh4cBpEN0AYfxVZUnUpbn06MBtFVyVkfRMfSFhRM1sgEnt0WFg5DF9xQ3Z1XzxlIWRKFSd2R0lrZU5TQixmG3EVTQgNND1aciIPWzklWAgSPwsmIBd+bCNUDwtfQEJtbxt/Nl0cOWMRCxl+OmNdRkc3FSR7dSYKCTU3YnAvTCB7SykWRxsyYV5GaXUVUggMGENHJi4mPiFRG0RdI0RbSjIoHkV0bSwNfxQUPkZ1dzJAVxlRDxZhDhYYRRcje0I3Yhk4QhgvPV8/YngiD2lIYCVKVk1+LRkVe3IlS3FPLH12X30beylOIA0lVBMhP05yxROy0w==; wbx-validation-key=1b586389-7e25-4ec7-a4e6-cafd95b079ba; x-supplier-id-external=311e66ac-3ddd-4416-a35d-29f09a158495; x_wbaas_token=1.1000.e80f0fe5cb084555ba7df2a579fb1901.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NDsgcnY6MTQ2LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMTQ2LjB8MTc2ODc0MDkwNHxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NjgxMzYxMDR8MQ==.MEUCIQClFTg8TxPlnMjbbbM/tmJmqivVYutHXyd4mSoAoJt2BQIgI0p8CR05xOMfXwMIyS4c7/0kMDCerVl37OkRMg4WxSU='
+
     constructor() {
 
         this.myProxy.push({
@@ -70,6 +71,8 @@ class ProxyAndErrors {
     // Универсальный обработчик ошибок для парсеров
     async view_error (err, funcName, funcParam){
         let needGetData = false
+        if (err.response?.status) if (err.response.status === 498) console.log('Устарели куки');
+
         console.log(err.code)
 
         // Временно не доступен сайт ВБ

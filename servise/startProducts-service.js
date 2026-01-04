@@ -41,9 +41,11 @@ class StartProductsService{
             for (let k in startProducts)
                 if (updateProductListInfo[z].id === startProducts[k].id){
 
-                    let  addDiscount = 0
-                    try {addDiscount = Math.round(-1000*(updateProductListInfo[z].price - startProducts[k].startPrice)/(startProducts[k].startPrice+0.1))/10} catch (e) {addDiscount = 0}
-                    const nowDiscount =  Math.round(startProducts[k].startDiscount+addDiscount)
+                    let  nowDiscount = 0
+                    try {
+                        const msp = 100*startProducts[k].startPrice/(100-startProducts[k].startDiscount)
+                        nowDiscount = Math.round(100*(msp -updateProductListInfo[z].price)/(msp-1) )
+                    } catch (e) { nowDiscount = 0}
 
                     result.push({
                         id               : startProducts[k].id,

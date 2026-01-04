@@ -21,6 +21,8 @@ class UserStatService{
             password        :   {type: DataTypes.STRING},
             token           :   {type: DataTypes.STRING},
             role            :   {type: DataTypes.STRING},
+            apl             :   {type: DataTypes.STRING},  // используем для изменения пароля если забыли
+            needUpdateProducts :  {type: DataTypes.BOOLEAN}, // Есть ли продукты для обновления данных
             userParam       :   {type: DataTypes.JSON},
         },
         { createdAt: false,   updatedAt: false  }  )

@@ -38,18 +38,18 @@ router.post('/loadAllUserStat', wbController.loadAllUserStat)
 router.post('/registration',clientController.registration)
 router.post('/login', clientController.login)
 router.post('/tokenTest', clientController.tokenTest)
+router.post('/updatePassword', clientController.updatePassword)
+router.post('/newPassword', clientController.newPassword)
+
+// функции по работе с продуктами на мониторинг
+router.post('/addTrackProducts', clientController.addTrackProduct)
+router.post('/loadTrackProducts', clientController.getAllTrackProducts)
+router.post('/saveTrackProduct', clientController.saveTrackProduct)
+router.post('/updateAllTrackProducts', clientController.updateAllTrackProducts)
 
 
 
 
-// router.post('/login', userController.login)
-// router.post('/saveUser', userController.saveUser)
-// router.post('/sendemailconfirm', userController.sendEmailConfirm)
-// router.post('/logout', userController.logout)
-// router.get('/activate/:link', userController.activate)
-// // router.get('/refresh', userController.refresh)  // Реактивация токена
-// router.post('/refresh', userController.refresh)  // Реактивация токена
-// router.get('/users', authMiddleware, userController.getUsers)
 
 
 

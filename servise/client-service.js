@@ -262,6 +262,7 @@ class ClientService {
         try {
             idInfoWB = await PARSER_GetIdInfo(id)
             idInfo = await ProductIdService.getIdInfo(id)
+
             if (idInfo) {
                 isInBase = true
                 productInfo = await ProductListService.getProductInfo(idInfo)

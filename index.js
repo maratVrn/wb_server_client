@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser')
 const router = require('./router/index')
 const cron = require("node-cron");       // Для выполнения задачи по расписанию
 const errorMiddleware = require('./exceptions/error-middleware')
+const UserService = require("./servise/user-service");
 const PORT = process.env.PORT ||  5003;
 const app = express()
 // Сохраняем статистику посещений раз в 10 минут
@@ -32,7 +33,14 @@ const testData = [
         body : "доступ к телу есть"
     }
 ]
-
+function getCurrDt ()  {
+    const dt =  new  Date()
+    return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString()
+}
+async function taskSchedule(arg) {
+    console.log('Запускаем трекер ' +getCurrDt() );
+    UserService.updateAllTrackProducts().then()
+}
 const start = async () => {
     try {
         await sequelize.authenticate()
@@ -40,7 +48,8 @@ const start = async () => {
         await UserStatService.startDb()
 
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
-
+         // Запускаем функцию трекера
+        setInterval(taskSchedule, 1000*60*30, 'noArg');
 
     } catch (e) {
         console.log(e)

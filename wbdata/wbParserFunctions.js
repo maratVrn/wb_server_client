@@ -106,16 +106,8 @@ async function PARSER_GetIdInfo(id) {
             const url = `https://www.wildberries.ru/__internal/u-card/cards/v4/detail?dest=-1255987&lang=ru&nm=`+parseInt(id).toString()
 
             // console.log(url);
-            // Реалистичный User-Agent для Chrome на Windows
-            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-            const myCookie = ProxyAndErrors.cookie
-            const browserHeaders = {
-                'User-Agent': userAgent,  'Cookie' : myCookie,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Connection': 'keep-alive',  'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
-            };
 
-            const res =  await axios.get(url, {headers: browserHeaders}).then(response => {
+            const res =  await axios.get(url, {headers: ProxyAndErrors.browserHeaders}).then(response => {
                 const products = response.data.products
 
                 if (products[0])
@@ -150,7 +142,7 @@ async function PARSER_GetIdInfo(id) {
                             }
                         }
                                    }
-
+                    if (realTotalQuantity < resData.totalQuantity) realTotalQuantity =  resData.totalQuantity
                     const data = {
                         price           : price,
                         name            : resData.name,
@@ -200,19 +192,9 @@ async function PARSER_GetSearchProductsID(query) {
             try {
 
                 let url = `https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search?dest=-1255987&page=${page}&query=${query}&resultset=catalog&sort=popular`
-                // Реалистичный User-Agent для Chrome на Windows
-                const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-                const myCookie = ProxyAndErrors.cookie
-                const browserHeaders = {
-                    'User-Agent': userAgent,
-                    'Cookie': myCookie,
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-                    'Connection': 'keep-alive',
-                    'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
-                };
+
                 url = encodeURI(url)
-                await axios.get(url, {headers: browserHeaders}).then(response => {
+                await axios.get(url, {headers: ProxyAndErrors.browserHeaders}).then(response => {
                     const products = response.data.products
                     if (products) {
                         for (let i in products) {
@@ -245,15 +227,8 @@ async function PARSER_GetSimilarProducts(id) {
             let url = `https://www.wildberries.ru/__internal/u-recom/recom/ru/common/v8/search?dest=-1255987&page=1&query=похожие ${id}&resultset=catalog`
 
             // Реалистичный User-Agent для Chrome на Windows
-            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-            const myCookie = ProxyAndErrors.cookie
-            const browserHeaders = {
-                'User-Agent': userAgent,  'Cookie' : myCookie,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Connection': 'keep-alive',  'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
-            };
             url = encodeURI(url)
-            await axios.get(url, {headers: browserHeaders}).then(response => {
+            await axios.get(url, {headers: ProxyAndErrors.browserHeaders}).then(response => {
                 const products = response.data.products
                 if (products) {
 
@@ -306,11 +281,11 @@ async function PARSER_GetSimilarProducts(id) {
 
 
 // НУЖНА
-async function PARSER_GetProductListPriceInfo(productIdList) {
+async function  PARSER_GetProductListPriceInfo(productIdList) {
     let productListInfo = []
     let needGetData = true
     let productListStr = ''
-    for (let i in productIdList) {
+        for (let i in productIdList) {
         if (i>0) productListStr += ';'
         productListStr += parseInt(productIdList[i]).toString()
     }
@@ -319,20 +294,11 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
             // const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
             // const url = `https://www.wildberries.ru/__internal/u-card/cards/v4/list?dest=-3390370&nm=`+productListStr
             const url = `https://www.wildberries.ru/__internal/u-card/cards/v4/detail?dest=-1255987&lang=ru&nm=`+productListStr
-            // Реалистичный User-Agent для Chrome на Windows
-            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-            const myCookie = ProxyAndErrors.cookie
-            const browserHeaders = {
-                'User-Agent': userAgent,  'Cookie' : myCookie,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Connection': 'keep-alive',  'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
-            };
 
 
-            await axios.get(url, {headers: browserHeaders}).then(response => {
+            await axios.get(url, {headers: ProxyAndErrors.browserHeaders}).then(response => {
                 const products = response.data.products
                 if (products) {
-
                     for (let i in products){
                         const currProduct = products[i]
                         let realTotalQuantity = 0
@@ -354,7 +320,9 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
                             }
                                 //  использовать если сломается остатки по размерам
                                 //     realTotalQuantity = currProduct.totalQuantity? currProduct.totalQuantity : 0
-                            const newProduct = {
+                        if (realTotalQuantity < currProduct.totalQuantity) realTotalQuantity =  currProduct.totalQuantity
+
+                        const newProduct = {
                                 id               : currProduct?.id ? currProduct.id : 0,
                                 price            : price,
                                 totalQuantity    : realTotalQuantity,
@@ -364,6 +332,7 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
                                 reviewRating     : currProduct?.reviewRating? currProduct?.reviewRating : 0,
                                 subjectId        : currProduct?.subjectId? currProduct?.subjectId : 0,
                                 feedbacks        : currProduct?.feedbacks? currProduct?.feedbacks : 0,
+                                sizes            : currProduct.sizes? currProduct.sizes : [],
                             }
 
 
@@ -381,5 +350,5 @@ async function PARSER_GetProductListPriceInfo(productIdList) {
 
 
 module.exports = {
-    PARSER_GetIAbout,PARSER_GetIdInfo,  PARSER_GetProductListPriceInfo, PARSER_GetSimilarProducts,  PARSER_LoadMiddlePhotoUrl, PARSER_GetSearchProductsID
+    PARSER_GetIAbout,PARSER_GetIdInfo,  PARSER_GetProductListPriceInfo, PARSER_GetSimilarProducts,  PARSER_LoadMiddlePhotoUrl, PARSER_GetSearchProductsID, PARSER_LoadLittlePhotoUrl
 }

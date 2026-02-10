@@ -3,7 +3,7 @@ const sequelize = require("../db");
 const {DataTypes} = require("sequelize");
 const fs = require('fs');
 const {PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions");
-
+const {calcDiscount}  = require("../wbdata/wbfunk");
 class StartProductsService{
 
 
@@ -12,16 +12,11 @@ class StartProductsService{
             startDiscount      :   {type: DataTypes.INTEGER},
             startQty           :   {type: DataTypes.INTEGER},
             startPrice         :   {type: DataTypes.INTEGER},
+            priceHistory       :   {type: DataTypes.JSON}
         },
         { createdAt: false,   updatedAt: false  }  )
 
-    // StartProducts = wbData.define('startProducts',{
-    //         id                 :   {type: DataTypes.INTEGER, primaryKey: true},
-    //         startDiscount      :   {type: DataTypes.INTEGER},
-    //         startQty           :   {type: DataTypes.INTEGER},
-    //         startPrice         :   {type: DataTypes.INTEGER},
-    //     },
-    //     { createdAt: false,   updatedAt: false  }  )
+
 
 
     async loadStartProducts(needDelete, deleteIdList){
@@ -29,7 +24,6 @@ class StartProductsService{
 
         if (needDelete) await this.StartProducts.destroy({where: {id: deleteIdList}})
         const startProducts = await this.StartProducts.findAll()
-
         let productList = []
         for (let k in startProducts)
             productList.push(startProducts[k].id)
@@ -43,8 +37,13 @@ class StartProductsService{
 
                     let  nowDiscount = 0
                     try {
-                        const msp = 100*startProducts[k].startPrice/(100-startProducts[k].startDiscount)
-                        nowDiscount = Math.round(100*(msp -updateProductListInfo[z].price)/(msp-1) )
+
+                        const dt = new Date().toLocaleDateString()
+                        const nowPrice =  {d: dt, sp: updateProductListInfo[z].price, q : updateProductListInfo[z].totalQuantity}
+                        if (startProducts[k].priceHistory.length>0)  if (startProducts[k].priceHistory.at(-1).d === dt) startProducts[k].priceHistory.pop()
+                        startProducts[k].priceHistory.push(nowPrice)
+                        let discountData = calcDiscount(startProducts[k].priceHistory)
+                        nowDiscount =  discountData.isDataCalc? discountData.discount : 0
                     } catch (e) { nowDiscount = 0}
 
                     result.push({
@@ -75,9 +74,9 @@ class StartProductsService{
         return  result
     }
 
-    async addStartProduct(id, startDiscount, startQty, startPrice){
-        const oneAddProduct = [{id:id, startDiscount : startDiscount, startQty : startQty, startPrice : startPrice}]
-        const res = await this.StartProducts.bulkCreate(oneAddProduct,{    updateOnDuplicate: ["startDiscount", "startQty", "startPrice"] }).then(() => {})
+    async addStartProduct(id, startDiscount, startQty, startPrice, priceHistory){
+        const oneAddProduct = [{id:id, startDiscount : startDiscount, startQty : startQty, startPrice : startPrice, priceHistory: priceHistory}]
+        const res = await this.StartProducts.bulkCreate(oneAddProduct,{    updateOnDuplicate: ["startDiscount", "startQty", "startPrice", "priceHistory"] }).then(() => {})
         return  res
     }
 

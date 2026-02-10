@@ -19,7 +19,7 @@ class MailService {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
-            subject:'Изменение пароля на сайту wb.sale',
+            subject:'Изменение пароля на сайту mp-tracker.ru',
             text:'',
             html:
             `

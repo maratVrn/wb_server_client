@@ -7,7 +7,14 @@ class ProxyAndErrors {
     config = {}
     proxyId = -1
 
-    cookie = '_ga_TXRZMJQDFE=GS2.1.s1759049348$o7$g0$t1759049348$j60$l0$h0; _ga=GA1.1.1812723687.1758564601; external-locale=ru; _wbauid=5008695551766416174; cfidsw-wb=H8jlcc8qq+Mvh980e0CGWuvVX0rONlM/EmSOleVZwKceNdP3NqBgSZNpnhTgMGNcOgCw3DC11y6pqnuC7zm2lgWKLPUPjRl1Y2pvNJxrZvlaHYFfBkehb8qcNMmLDcSezU60LnF4c7RPSeZzx8GuJzYHetcKezZLziEgyUIa; __zzatw-wb=MDA0dC0yYBwREFsKEH49WgsbSl1pCENQGC9LXz1uLWEPJ3wjYnwgGWsvC1RDMmUIPkBNOTM5NGZwVydgTl8mRFVSCSUdFHhsH0FLVCNyM3dlaXceViUTFmcPRyJ1F0hAGxI6aCU6f1JpGWUzDldjGAsmVDVfP3wnHhl7dChQcX9NfXY3PmJ+MQ9pOSRjCh9+OFoLDWk3XBQ8dWU+SHN6KjtqJV9LXCBDUT9FbllGaXUVF0M8HHsNKkNtLToZUXYQQlh4cBpEN0AYfxVZUnUpbn06MBtFVyVkfRMfSFhRM1sgEnt0WFg5DF9xQ3Z1XzxlIWRKFSd2R0lrZU5TQixmG3EVTQgNND1aciIPWzklWAgSPwsmIBd+bCNUDwtfQEJtbxt/Nl0cOWMRCxl+OmNdRkc3FSR7dSYKCTU3YnAvTCB7SykWRxsyYV5GaXUVUggMGENHJi4mPiFRG0RdI0RbSjIoHkV0bSwNfxQUPkZ1dzJAVxlRDxZhDhYYRRcje0I3Yhk4QhgvPV8/YngiD2lIYCVKVk1+LRkVe3IlS3FPLH12X30beylOIA0lVBMhP05yxROy0w==; wbx-validation-key=1b586389-7e25-4ec7-a4e6-cafd95b079ba; x-supplier-id-external=311e66ac-3ddd-4416-a35d-29f09a158495; x_wbaas_token=1.1000.e80f0fe5cb084555ba7df2a579fb1901.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NDsgcnY6MTQ2LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMTQ2LjB8MTc2ODc0MDkwNHxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NjgxMzYxMDR8MQ==.MEUCIQClFTg8TxPlnMjbbbM/tmJmqivVYutHXyd4mSoAoJt2BQIgI0p8CR05xOMfXwMIyS4c7/0kMDCerVl37OkRMg4WxSU='
+    cookie = '_wbauid=8898648211741974483; _ga_TXRZMJQDFE=GS2.1.s1758873409$o4$g0$t1758873409$j60$l0$h0; _ga=GA1.1.1123006456.1758441126; x_wbaas_token=1.1000.4bf38ef3f4c042b2acd8b166811e0413.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NDsgcnY6MTQ3LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMTQ3LjB8MTc3MTgzMDcyOXxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NzEyMjU5Mjl8MQ==.MEQCIBrqBh9sYwzKJN/gz9hTcuqj6ZsVlR2vtNF5VkwzD5wTAiACF2vWxXLd5E41YC8uIXAWEUxCy1GlwyjH3zpYbilIkA=='
+    userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    // Реалистичный User-Agent для Chrome на Windows
+    browserHeaders = {
+        'User-Agent': this.userAgent,  'Cookie' : this.cookie,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Connection': 'keep-alive',  'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
+    };
 
     constructor() {
 

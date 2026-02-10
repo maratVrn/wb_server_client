@@ -1,6 +1,6 @@
 const {DataTypes} = require("sequelize");
 const {Sequelize} = require('sequelize')
-
+const { Op } = require('sequelize');
 class UserStatService{
 
 
@@ -9,6 +9,12 @@ class UserStatService{
         dialect: 'postgres',
         logging: false
     });
+
+    tUserFind = {
+        isFind : false,
+        uName : '',
+        uEMail : ''
+    }
 
     maxActionCount = 100  // Максимальное кол-во действий разрешенное для IP
 
@@ -24,6 +30,7 @@ class UserStatService{
             apl             :   {type: DataTypes.STRING},  // используем для изменения пароля если забыли
             needUpdateProducts :  {type: DataTypes.BOOLEAN}, // Есть ли продукты для обновления данных
             userParam       :   {type: DataTypes.JSON},
+            tid             :   {type: DataTypes.BIGINT},  // id пользователя в telegram для отправки сообщения
         },
         { createdAt: false,   updatedAt: false  }  )
 
@@ -125,9 +132,59 @@ class UserStatService{
         })
     }
 
-    async loadStartProducts(needDelete, deleteIdList){
+    async findUserByTID(tid, command = null){
+        this.tUserFind = {isFind : false, uName : '',  uEMail : '', command : null, userParam : {}}
+        const user = await  this.users.findOne( {where: {tid:tid}} )
+        if (user) {
+            if (command) {
+                user.apl = command
+                await this.users.update({apl: user.apl,}, {where: {id: user.id,},})
+            }
+            this.tUserFind = {isFind: true, uName: user.name, uEMail: user.email, command : user.apl, userParam : user.userParam}
+        }
+    }
+    async setUserTIDByEmail(email, tid){
+        this.tUserFind = {isFind : false, uName : '',  uEMail : ''}
+        const user = await  this.users.findOne( {where: {email:email.toLowerCase()}} )
+        if (user) {
+            this.tUserFind = {isFind: true, uName: user.name, uEMail: user.email}
+            user.tid = tid
+            await this.users.update({tid: user.tid,}, {where: {id: user.id,},})
+        }
+    }
+
+
+    async loadStartProducts(startDate,endDate, needDelete, deleteIdList){
         if (needDelete) await this.statInfoDB.destroy({where: {id: deleteIdList}})
-        const userStat = await this.statInfoDB.findAll()
+        // 1. "Мягкая" валидация: если даты нет или она некорректна — берем "сегодня"
+        let start = new Date(startDate);
+        let end = new Date(endDate);
+        if (isNaN(start.getTime())) {
+            start = new Date();
+            start.setDate(start.getDate() - 7); // по умолчанию за неделю
+        }
+        if (isNaN(end.getTime())) {
+            end = new Date();
+        }
+        // 2. Установка времени 00:00:00 для начала
+        start.setHours(0, 0, 0, 0);
+        // 3. Установка времени 23:59:59 для конца
+        end.setHours(23, 59, 59, 999);
+        // 4. Дополнительная проверка логики (если старт > конец после правок)
+        if (start > end) {
+            // Если перепутали местами, просто меняем их
+            [start, end] = [end, start];
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+        }
+        const userStat = await this.statInfoDB.findAll({
+            where: {
+                Date: {
+                    [Op.between]: [start, end]
+                }
+            },
+            order: [['Date', 'ASC']]
+        })
         return  userStat
     }
 

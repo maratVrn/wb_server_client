@@ -1,7 +1,93 @@
 const fs = require("fs");
-const noIdCatalogInclude = [1234, 131289, 61037, 1235]
 
 
+
+function getPriceFromHistoryLight (history = [], dayCount = 30 ){
+
+
+    let startDateInBase = ''                        // С Какой даты товар в базе
+    let AllHistory = []
+    let crDate = new Date()
+    crDate.setDate(crDate.getDate() - dayCount);
+
+    let needStartI = 0
+
+    for (let i =history.length-1 ; i>=0; i--){
+        const s = history[i].d.split('.')
+        const nowDate = new Date(s[2]+'-'+s[1]+'-'+s[0]);
+        if (nowDate <= crDate) {
+            needStartI = i
+            break
+        }
+    }
+
+
+
+    let crHistory = {}
+
+
+    // Сначала соберем полный массив цен с учетом пропусков
+    if (history?.length >0) {
+        startDateInBase = history[needStartI].d
+        const s = startDateInBase.split('.')
+        crDate = new Date(s[2]+'-'+s[1]+'-'+s[0]);
+        crHistory = history[needStartI]
+        AllHistory.push(crHistory.sp)
+    }
+
+
+    for (let i =needStartI+1 ; i<history.length; i++){
+
+        let needNextDay = true
+        let counter = 0
+        while (needNextDay){
+            counter++
+            crDate.setDate(crDate.getDate() + 1);
+
+            const s = history[i].d.split('.')
+            const nd = new Date(s[2]+'-'+s[1]+'-'+s[0]);
+
+
+            if (nd<crDate) needNextDay = false
+            else {
+                if (crDate.toLocaleDateString() === history[i].d) {
+                    crHistory = history[i]
+                    AllHistory.push(crHistory.sp > 0 ? crHistory.sp : AllHistory.at(-1))
+                    needNextDay = false
+                } else {
+                    AllHistory.push(crHistory.sp > 0 ? crHistory.sp : AllHistory.at(-1))
+                }
+                if (counter > 365) needNextDay = false // Исключим случай если год не менялась цена
+            }
+
+
+        }
+    }
+    let needHistory = []
+    if (AllHistory.length>dayCount) needHistory = AllHistory.slice(AllHistory.length-dayCount, AllHistory.length)
+    else needHistory = AllHistory
+
+    return  needHistory
+}
+function calcDiscount (history = []){
+    const dayCalc = 90
+    const priceArray= getPriceFromHistoryLight(history, dayCalc)
+    let isDataCalc = false
+    let endPrice = priceArray.at(-1)
+
+    let medianPrice = 0
+    let discount2 = 0
+    // Правильнее по медиане посчитать
+    if (endPrice>0)
+        if (priceArray.length >= dayCalc/2) {
+            priceArray.sort(function (a, b) {return b - a;})
+            medianPrice = priceArray[Math.round(priceArray.length / 2)]
+            discount2 = Math.round(100 * (medianPrice - endPrice) / medianPrice)
+            isDataCalc = true
+        }
+
+    return {isDataCalc : isDataCalc, meanPrice : medianPrice, discount : discount2}
+}
 
 async function saveProductLIstInfoToCVS(productList,productListInfo ){
 
@@ -51,43 +137,6 @@ async function saveProductLIstInfoToCVS(productList,productListInfo ){
 }
 
 
-// Сохранение данных в файлу при загрузке данных
-async function saveProductListToCVSFromLoadData(data, fName, brandName){
-    const fileName = fName + '.cvs'
-
-    let jsonData = ''
-
-
-    for (var key in data)
-        // TODO: Тут руслан просил только те кто не со склада вб выгрузить поэтому не все сохраняет
-        if (parseInt(data[key].dtype) !== 2)
-            jsonData += data[key].id+'\t'+data[key].subjectId+'\t'+ data[key].dtype+'\t'+data[key].promoTextCard  +'\t'+
-                    parseInt(data[key].priceU)+'\t'+data[key].sale+'\t'+ parseInt(data[key].salePriceU) +`\n`
-
-
-    // jsonData += data[key].id+'\t'+data[key].name+'\t'+ parseInt(data[key].priceU)+'\t'+data[key].sale+'\t'+ parseInt(data[key].salePriceU)+
-        //     '\t' + data[key].dtype+'\t'+data[key].brandId+'\t'+brandName+'\t'+data[key].subjectId+'\t'+data[key].totalQuantity+`\n`
-
-    fs.stat(String(fileName), (error, stats) => {
-       try {
-           stats.isFile()
-       } catch {
-           // const header = `id (Артикул)\tНазвание\tЦена\tЦена со скидкой\tСкидка\tdtype\tbrandId\tБрэнд\tsubjectId\ttotalQuantity\n`
-           const header = `id товара\tid предмета\tdtype\tАкция\tЦена\tЦена со скидкой\tСкидка\n`
-
-           fs.appendFileSync(String(fileName) , header, function(err) {
-
-           })
-       }
-
-        fs.appendFileSync(String(fileName),  jsonData, function(err) {
-            if (err) {
-                console.log(err);
-            }
-        });
-    })
-}
-
 module.exports = {
-       saveProductLIstInfoToCVS
+    getPriceFromHistoryLight, calcDiscount
 }

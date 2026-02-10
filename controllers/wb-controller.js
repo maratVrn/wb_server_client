@@ -49,9 +49,11 @@ class WbController{
 
     async loadAllUserStat (req, res, next) {
         try {
+            const startDate =req.body.startDate? req.body.startDate : new Date()
+            const endDate =req.body.endDate? req.body.endDate : new Date()
             const needDelete    = req.body.needDelete? req.body.needDelete : false
             const deleteIdList = req.body.deleteIdList? req.body.deleteIdList : []
-            const  result  = await UserStatService.loadStartProducts(needDelete, deleteIdList)
+            const  result  = await UserStatService.loadStartProducts(startDate,endDate, needDelete, deleteIdList)
             res.json(result)
         } catch (e) {
             console.log(e);
@@ -66,9 +68,10 @@ class WbController{
             const startDiscount    = req.body.startDiscount? req.body.startDiscount : 0
             const startQty   = req.body.startQty? req.body.startQty : 0
             const startPrice = req.body.startPrice? req.body.startPrice : 0
+            const priceHistory = req.body.priceHistory? req.body.priceHistory : []
 
             let result = 0
-            if (id>0)  result  = await StartProductsService.addStartProduct(id, startDiscount, startQty, startPrice)
+            if (id>0)  result  = await StartProductsService.addStartProduct(id, startDiscount, startQty, startPrice, priceHistory)
             res.json(result)
         } catch (e) {
             console.log(e);

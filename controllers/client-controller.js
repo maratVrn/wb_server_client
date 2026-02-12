@@ -192,6 +192,9 @@ class ClientController {
 
     async addTrackProduct(req, res, next) {
         try {
+            const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            UserStatService.addIpInfo(ip, 'addTrack').then()
+
             const addProductInfo = req.body.addProductInfo ? req.body.addProductInfo : {}
             const userId = req.body.userId? req.body.userId : ''
             const result = await UserService.addTrackProduct(addProductInfo, userId)

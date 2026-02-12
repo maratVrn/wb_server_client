@@ -41,19 +41,7 @@ class UserStatService{
             Date            :   {type: DataTypes.DATE},
             crDate          :   {type: DataTypes.STRING},
             statIPInfo      :   {type: DataTypes.JSON},       // Формат хранения статистики данных за день в виде массива
-                            // statIPInfo : [
-                            //             {
-                            //                 endEntryTime : 0,       // Последнее время в милиссекундах на вход
-                            //                 ip : '',                // IP
-                            //                 ipInt : 0,              // IP  в цифре для упрощенного поиска
-                            //                 entryCount : 0,         // кол-во входа в систему (если прошло пол часа то считается следущий вход)
-                            //                 viewProductCount : 0,   // колл-во просмотров товара
-                            //                 searchCount : 0,        // Кол-во поисковых запросов
-                            //                 wbTransitCount : 0,     // кол-во переходов на вб
-                            //                 productListCount : 0,   // Просмотры продукт листов
-                            //                 allActionCount : 0      // общее кол-во действий за сегодня (если ограниченно то выдаем ошибку что больше нельзя)
-                            //             }
-                            //         ]
+
         },
         { createdAt: false,   updatedAt: false  }  )
 
@@ -114,6 +102,7 @@ class UserStatService{
                 if (actionVariant === 'search') this.statInfo.statIPInfo[crI].searchCount ++
                 if (actionVariant === 'productList') this.statInfo.statIPInfo[crI].productListCount ++
                 if (actionVariant === 'wbTransit') this.statInfo.statIPInfo[crI].wbTransitCount ++
+                if (actionVariant === 'addTrack') this.statInfo.statIPInfo[crI].addTrackCount ++
 
 
                 this.statInfo.statIPInfo[crI].allActionCount ++
@@ -130,7 +119,9 @@ class UserStatService{
             searchCount : 0,
             wbTransitCount : 0,
             productListCount : 0,
-            allActionCount : 1
+            allActionCount : 1,
+            addTrackCount : 0
+
         })
     }
 

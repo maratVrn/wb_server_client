@@ -26,11 +26,13 @@ class UserStatService{
             email           :   {type: DataTypes.STRING},
             password        :   {type: DataTypes.STRING},
             token           :   {type: DataTypes.STRING},
+            tg_token        :   {type: DataTypes.STRING},
             role            :   {type: DataTypes.STRING},
-            apl             :   {type: DataTypes.STRING},  // используем для изменения пароля если забыли
-            needUpdateProducts :  {type: DataTypes.BOOLEAN}, // Есть ли продукты для обновления данных
+            apl             :   {type: DataTypes.STRING},       // используем для изменения пароля если забыли
+            needUpdateProducts :  {type: DataTypes.BOOLEAN},    // Есть ли продукты для обновления данных
             userParam       :   {type: DataTypes.JSON},
-            tid             :   {type: DataTypes.BIGINT},  // id пользователя в telegram для отправки сообщения
+            tid             :   {type: DataTypes.BIGINT},       // id пользователя в telegram для отправки сообщения
+
         },
         { createdAt: false,   updatedAt: false  }  )
 
@@ -143,9 +145,9 @@ class UserStatService{
             this.tUserFind = {isFind: true, uName: user.name, uEMail: user.email, command : user.apl, userParam : user.userParam}
         }
     }
-    async setUserTIDByEmail(email, tid){
+    async setUserTIDByTGToken(tg_token, tid){
         this.tUserFind = {isFind : false, uName : '',  uEMail : ''}
-        const user = await  this.users.findOne( {where: {email:email.toLowerCase()}} )
+        const user = await  this.users.findOne( {where: {tg_token:tg_token}} )
         if (user) {
             this.tUserFind = {isFind: true, uName: user.name, uEMail: user.email}
             user.tid = tid

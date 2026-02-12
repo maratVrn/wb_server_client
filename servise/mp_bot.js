@@ -1,18 +1,25 @@
 const { Telegraf, Markup } = require('telegraf');
-
 const UserStatService = require("./userStat-service");
 const ClientService = require("./client-service");
 const {PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions");
 const {calcDiscount}  = require("../wbdata/wbfunk");
-const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
 
-const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-};
+function isValidTokenFormat(text) {
+    // Проверка: строка 28 символов, формат Base64
+    const tokenRegex = /^[A-Za-z0-9+/]{27,28}=?=?$/;
+    return typeof text === 'string' && tokenRegex.test(text);
+}
 
+const setAboutMessage = () =>{
+    let result = '<b>Информация по боту @mp_tracker_wb_bot </b> \n'
+    result += 'Бот позволяет отслеживать изменения цен и остатки на товары на WB а также предоставляет информацию по товарам - среднюю цену, реальную скидку по любому товару \n'
+    result += 'Для использования бота небходимо зарегистрироваться на сайте <b>'+process.env.CLIENT_SITE+'</b> и ввести токен, который генерируется в личном кабинете \n'
+
+
+    return result
+
+}
 const setProductMessage = (userParam) =>{
     let result = '<b>У вас нет отслеживаемых продуктов сайте '+process.env.CLIENT_SITE+'</b>'
     if (userParam?.trackProducts?.length > 0){
@@ -223,7 +230,7 @@ class Mp_bot {
                         ctx.reply(`Привет! ${UserStatService.tUserFind.uName} ваш email: ${UserStatService.tUserFind.uEMail}`)
                            else
                                 ctx.reply(
-                                    '<b>Вы не зарегестрированы на сайте '+process.env.CLIENT_SITE+'</b>\n' + 'Если у вас есть аккаунт введие ваш email или пройдите регистрацию на сайте',
+                                    '<b>Вы не зарегестрированы на сайте '+process.env.CLIENT_SITE+'</b>\n' + 'Если у вас есть аккаунт введие токен который указан в вашем личном кабинете ',
                                     { parse_mode: 'HTML' ,  reply_markup: {inline_keyboard: [ [{ text: '📦 '+process.env.CLIENT_SITE, url: 'https://' + process.env.CLIENT_SITE}]]}}
                                 );
 
@@ -233,21 +240,29 @@ class Mp_bot {
 
 
         this.bot.command('products', (ctx) => {
-            this.nowCommand ='products'
+
+
             UserStatService.findUserByTID(ctx.from.id).then(async () => {
                 if (UserStatService.tUserFind.isFind) {
-                    // console.log(UserStatService.tUserFind.uEMail);
-                    // console.log(UserStatService.tUserFind.userParam);
 
                     ctx.reply(setProductMessage(UserStatService.tUserFind.userParam),
                         { parse_mode: 'HTML' ,  reply_markup: {inline_keyboard: [ [{ text: '📦 '+process.env.CLIENT_SITE, url: 'https://' + process.env.CLIENT_SITE}]]}}
                     );
 
                 }
+                else ctx.reply(
+                    '<b>Вы не зарегестрированы на сайте '+process.env.CLIENT_SITE+'</b>\n' + 'Если у вас есть аккаунт введие токен который указан в вашем личном кабинете ',
+                    { parse_mode: 'HTML' ,  reply_markup: {inline_keyboard: [ [{ text: '📦 '+process.env.CLIENT_SITE, url: 'https://' + process.env.CLIENT_SITE}]]}}
+                );
             })
 
         });
 
+        this.bot.command('about', (ctx) => {
+            ctx.reply(setAboutMessage(),
+                { parse_mode: 'HTML' ,  reply_markup: {inline_keyboard: [ [{ text: '📦 '+process.env.CLIENT_SITE, url: 'https://' + process.env.CLIENT_SITE}]]}}
+            );
+        });
 
         this.bot.command('info', (ctx) => {
             const tid = ctx.from.id
@@ -256,7 +271,7 @@ class Mp_bot {
                     ctx.reply(`Напишите ID товара`)
                 }
                 else ctx.reply(
-                    '<b>Вы не зарегестрированы на сайте '+process.env.CLIENT_SITE+'</b>\n' + 'Если у вас есть аккаунт введие ваш email или пройдите регистрацию на сайте',
+                    '<b>Вы не зарегестрированы на сайте '+process.env.CLIENT_SITE+'</b>\n' + 'Если у вас есть аккаунт введие токен который указан в вашем личном кабинете ',
                     { parse_mode: 'HTML' ,  reply_markup: {inline_keyboard: [ [{ text: '📦 '+process.env.CLIENT_SITE, url: 'https://' + process.env.CLIENT_SITE}]]}}
                 );
             })
@@ -282,14 +297,15 @@ class Mp_bot {
         this.bot.on('text', (ctx) => {
             let needNext = true
             // Пользватель прислал email (скорее всего он хочет прявязать аккаунт)
-            if (validateEmail(ctx.message.text.trim())) {
-                const email = ctx.message.text.trim()
+            if (isValidTokenFormat(ctx.message.text.trim())) {
+
+                const tg_token = ctx.message.text.trim()
                 const tid = ctx.from.id
-                // TODO: Привязку надо делать через сайт!! сейчас это криво тк любой может на себя забрать управление по email
-                UserStatService.setUserTIDByEmail(email, tid).then(()=>{
+
+                UserStatService.setUserTIDByTGToken(tg_token, tid).then(()=>{
                     if (UserStatService.tUserFind.isFind)
                         ctx.reply(`Привет! ${UserStatService.tUserFind.uName} Вы успешно прявязали аккаунт к боту трекера сайта `+process.env.CLIENT_SITE+' теперь все данные об изменениях цен и остатов ваших товаров будем присылать вам сюда')
-                    else ctx.reply(`Аккатунт с email ${email} не найден на сайте `+process.env.CLIENT_SITE+' проверьте правильность введенных данных')
+                    else ctx.reply(`Аккатунт с токеном ${tg_token} не найден на сайте `+process.env.CLIENT_SITE+' проверьте правильность введенных данных')
                 })
 
 
@@ -323,17 +339,7 @@ class Mp_bot {
                                     let needReply = true
                                     while (needReply)
                                         try {
-                                            console.log('tut');
-                                            // 1. Скачиваем изображение через axios
-                                            // const response = await axios({ url: productInfo.photoUrl,  method: 'GET',  responseType: 'stream'});
-                                            //
-                                            // // 2. Сохраняем поток в файл
-                                            // const writer = fs.createWriteStream(localPath);
-                                            // response.data.pipe(writer);
-                                            //
-                                            // // Ждем завершения записи в файл
-                                            // await new Promise((resolve, reject) => { writer.on('finish', resolve); writer.on('error', reject); });
-                                            // await new Promise(resolve => setTimeout(resolve, 300));
+
                                             // 3. Отправляем локальный файл делаем несколько попыток тк иногда прога зависает
                                             ctx.reply(setCaptionFindProduct(productInfo, isTrack),
                                                 { parse_mode: 'HTML' ,
@@ -354,31 +360,9 @@ class Mp_bot {
                                                 }
                                             );
 
-                                            // await ctx.reply(//'<b>У вас нет отслеживаемых продуктов сайте '+process.env.CLIENT_SITE+'</b>',
-                                            //     // {source: localPath},
-                                            //     // {url: productInfo.photoUrl},
-                                            //     {
-                                            //         caption: setCaptionFindProduct(productInfo, isTrack),
-                                            //         parse_mode: 'HTML',
-                                            //
-                                            //         reply_markup: {
-                                            //             inline_keyboard: [
-                                            //                 [{
-                                            //                     text: '📦 wildberries.ru',
-                                            //                     url:  `https://www.wildberries.ru/catalog/${id}/detail.aspx`
-                                            //                 },
-                                            //                     {
-                                            //                         text: '📦 '+process.env.CLIENT_SITE,
-                                            //                         url: 'https://' + process.env.CLIENT_SITE + '/productInfo/' + id.toString()
-                                            //                     }]
-                                            //             ]
-                                            //         }
-                                            //     }
-                                            // );
 
                                             needReply = false
-                                            // 4. Удаляем файл после отправки (опционально)
-                                            // fs.unlinkSync(localPath);
+
                                         } catch (e) {
                                             await new Promise(resolve => setTimeout(resolve, 500));
                                             replyCount++

@@ -3,6 +3,7 @@ const mailService = require('./mail-service')
 const uuid  = require( 'uuid');
 const bcrypt = require('bcrypt')
 const jwt = require("jsonwebtoken");
+const crypto = require('crypto');
 const UserStatService = require("../servise/userStat-service");
 const mpBot = require('./mp_bot')
 const {PARSER_GetProductListPriceInfo, PARSER_LoadMiddlePhotoUrl} = require("../wbdata/wbParserFunctions");
@@ -14,7 +15,7 @@ const generateAccessToken = ( userName, email) => {
         userName,
         email
     }
-    return  jwt.sign(payLoad, process.env.ACCESS_SECRET_KEY, {expiresIn: '10d'})
+    return  jwt.sign(payLoad, process.env.ACCESS_SECRET_KEY, {expiresIn: '60d'})
 }
 
 class UserService {
@@ -27,7 +28,9 @@ class UserService {
             userName : user.name,
             email : user.email,
             role : user.role,
-            token : token
+            token : token,
+            tg_token : user.tg_token
+
         }
         return result
     }
@@ -108,7 +111,8 @@ class UserService {
 
         let crRole = "USER"
         if (formData.email === 'begisgevmr@mail.ru')  crRole = "ADMIN"
-        const user = await UserStatService.users.create({email : formData.email.toLowerCase(), password : hashPassword, role: crRole, token: token, userParam : {} , name : formData.username, apl : ''})
+        const tg_token = crypto.randomBytes(20).toString('base64');
+        const user = await UserStatService.users.create({email : formData.email.toLowerCase(), password : hashPassword, role: crRole, token: token, tg_token : tg_token, userParam : {} , name : formData.username, apl : ''})
 
         return  this.setUserResult(user, token)
     }

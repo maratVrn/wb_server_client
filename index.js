@@ -27,12 +27,6 @@ app.use('/api', router)
 // Подключать вконце!
 app.use(errorMiddleware)
 
-const testData = [
-    {
-        id : 1,
-        body : "доступ к телу есть"
-    }
-]
 function getCurrDt ()  {
     const dt =  new  Date()
     return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString()
@@ -41,6 +35,7 @@ async function taskSchedule(arg) {
     console.log('Запускаем трекер ' +getCurrDt() );
     UserService.updateAllTrackProducts().then()
 }
+
 const start = async () => {
     try {
         await sequelize.authenticate()

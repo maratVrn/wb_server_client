@@ -20,6 +20,16 @@ const setAboutMessage = () =>{
     return result
 
 }
+
+const setAccountMessage = (tUserFind) =>{
+    let result = '<b>Информация по вашему аккаунту на сайте '+process.env.CLIENT_SITE+' </b> \n'
+    result += 'Бот привязан к аккуанту \n'
+    result += 'Имя: <b>'+tUserFind.uName+'</b>\n'
+    result += 'EMail: <b>'+tUserFind.uEMail+'</b> '
+    return result
+}
+
+
 const setProductMessage = (userParam) =>{
     let result = '<b>У вас нет отслеживаемых продуктов сайте '+process.env.CLIENT_SITE+'</b>'
     if (userParam?.trackProducts?.length > 0){
@@ -257,6 +267,26 @@ class Mp_bot {
             })
 
         });
+
+        this.bot.command('account', (ctx) => {
+
+
+            UserStatService.findUserByTID(ctx.from.id).then(async () => {
+                if (UserStatService.tUserFind.isFind) {
+
+                    ctx.reply(setAccountMessage(UserStatService.tUserFind),
+                        { parse_mode: 'HTML' ,  reply_markup: {inline_keyboard: [ [{ text: '📦 '+process.env.CLIENT_SITE, url: 'https://' + process.env.CLIENT_SITE}]]}}
+                    );
+
+                }
+                else ctx.reply(
+                    '<b>Вы не зарегестрированы на сайте '+process.env.CLIENT_SITE+'</b>\n' + 'Если у вас есть аккаунт введие токен который указан в вашем личном кабинете ',
+                    { parse_mode: 'HTML' ,  reply_markup: {inline_keyboard: [ [{ text: '📦 '+process.env.CLIENT_SITE, url: 'https://' + process.env.CLIENT_SITE}]]}}
+                );
+            })
+
+        });
+
 
         this.bot.command('about', (ctx) => {
             ctx.reply(setAboutMessage(),

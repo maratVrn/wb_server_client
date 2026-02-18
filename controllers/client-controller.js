@@ -16,7 +16,7 @@ class ClientController {
             const searchParam = {
                 searchQuery :   req.body.searchQuery? req.body.searchQuery : '',
                 param   :   req.body.param? req.body.param : {},
-            }
+            } 
 
             const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             UserStatService.addIpInfo(ip, 'search').then()

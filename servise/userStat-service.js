@@ -66,7 +66,6 @@ class UserStatService{
     }
     async saveCurrStatData() {
         await this.statInfoDB.update({statIPInfo: this.statInfo.statIPInfo,}, {where: {id: this.statInfo.id,}})
-        console.log('saveCurrStatData');
         let now = new Date()
         let dateStr = now.toLocaleDateString()
         if (this.statInfo.crDate !== dateStr){
@@ -93,7 +92,6 @@ class UserStatService{
     async addIpInfo(ip, actionVariant = 'startEntry'){
         let now = new Date()
         const crIP = ip.replace(", 127.0.0.1", "")
-
         const crIPInt = parseInt((crIP.replace(".", "")).replace(".", ""))
         let isInStat = false // уэе есть этот IP в статистике
         let crI = -1
@@ -105,14 +103,11 @@ class UserStatService{
         if (isInStat) {
             try {
                 this.statInfo.statIPInfo[crI].endEntryTime = now
-
-
                 if (actionVariant === 'startEntry'){
                     const diffMs = now - this.statInfo.statIPInfo[crI].endEntryTime;
                     const minutes = Math.floor(diffMs / (1000 * 60))
                     if (minutes>30) this.statInfo.statIPInfo[crI].entryCount ++  // Новый заход в базу одного IP если прошло блее 30 минут
                 }
-
                 if (actionVariant === 'viewProduct') this.statInfo.statIPInfo[crI].viewProductCount ++
                 if (actionVariant === 'search') this.statInfo.statIPInfo[crI].searchCount ++
                 if (actionVariant === 'productList') this.statInfo.statIPInfo[crI].productListCount ++
@@ -126,7 +121,6 @@ class UserStatService{
             } catch (e) {console.log(e);}
         }
         else {
-            console.log('statIPInfo.push');
             const city = await this.fetchCityByIp(crIP)
             this.statInfo.statIPInfo.push({
                 endEntryTime: now,

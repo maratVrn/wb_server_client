@@ -1,6 +1,8 @@
 const {DataTypes} = require("sequelize");
 const {Sequelize} = require('sequelize')
 const { Op } = require('sequelize');
+const axios = require('axios-https-proxy-fix');
+
 class UserStatService{
 
 
@@ -64,7 +66,7 @@ class UserStatService{
     }
     async saveCurrStatData() {
         await this.statInfoDB.update({statIPInfo: this.statInfo.statIPInfo,}, {where: {id: this.statInfo.id,}})
-
+        console.log('saveCurrStatData');
         let now = new Date()
         let dateStr = now.toLocaleDateString()
         if (this.statInfo.crDate !== dateStr){
@@ -72,14 +74,27 @@ class UserStatService{
         }
 
     }
+
+    async fetchCityByIp(ip){
+        let result = 'no data'
+        const apiUrl = `http://ip-api.com/json/${ip}`
+        try {
+            await axios.get(apiUrl).then(response => {
+                // console.log(response.data);
+                if (response.data?.city) result = response.data?.city
+
+            })
+        } catch (error) {}
+        return result
+    };
+
+    //
     // Добавляем в статистику данные о действиях IP ка за сегодня а также проверяем кол-во совершенных действий если более то ставим запрает на получение данных
     async addIpInfo(ip, actionVariant = 'startEntry'){
         let now = new Date()
-        // console.log(now.toLocaleDateString()+',  '+now.toLocaleTimeString());
         const crIP = ip.replace(", 127.0.0.1", "")
-        // console.log(crIP);
-        const crIPInt = parseInt((crIP.replace(".", "")).replace(".", ""))
 
+        const crIPInt = parseInt((crIP.replace(".", "")).replace(".", ""))
         let isInStat = false // уэе есть этот IP в статистике
         let crI = -1
         for (let i in this.statInfo.statIPInfo) if (this.statInfo.statIPInfo[i].ipInt === crIPInt){
@@ -110,19 +125,24 @@ class UserStatService{
 
             } catch (e) {console.log(e);}
         }
-        else this.statInfo.statIPInfo.push({
-            endEntryTime : now,
-            ip : crIP,
-            ipInt : crIPInt,
-            entryCount : 1,
-            viewProductCount : 0,
-            searchCount : 0,
-            wbTransitCount : 0,
-            productListCount : 0,
-            allActionCount : 1,
-            addTrackCount : 0
+        else {
+            console.log('statIPInfo.push');
+            const city = await this.fetchCityByIp(crIP)
+            this.statInfo.statIPInfo.push({
+                endEntryTime: now,
+                city : city,
+                ip: crIP,
+                ipInt: crIPInt,
+                entryCount: 1,
+                viewProductCount: 0,
+                searchCount: 0,
+                wbTransitCount: 0,
+                productListCount: 0,
+                allActionCount: 1,
+                addTrackCount: 0
 
-        })
+            })
+        }
     }
 
     async findUserByTID(tid, command = null){
